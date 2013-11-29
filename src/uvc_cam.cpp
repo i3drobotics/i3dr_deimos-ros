@@ -15,50 +15,88 @@
 using std::string;
 using namespace uvc_cam;
 
-Cam::Cam(const char *_device, mode_t _mode, int _width, int _height, int _fps)
-: mode(_mode), device(_device),
-  motion_threshold_luminance(100), motion_threshold_count(-1),
-  width(_width), height(_height), fps(_fps), rgb_frame(NULL)
+
+static void
+enumerate_menu (int device_file_h_,
+		struct v4l2_queryctrl &queryctrl,
+		struct v4l2_querymenu &querymenu)
 {
+	printf ("  Menu items:\n");
+
+	memset (&querymenu, 0, sizeof (querymenu));
+	querymenu.id = queryctrl.id;
+
+	for (querymenu.index = queryctrl.minimum;
+	     querymenu.index <= queryctrl.maximum;
+	      querymenu.index++) {
+		if (0 == ioctl (device_file_h_, VIDIOC_QUERYMENU, &querymenu)) {
+			printf ("  %s\n", querymenu.name);
+		}
+	}
+}
+
+
+
+
+Cam::Cam(const char *_device, mode_t _mode, int _width, int _height, int _fps)
+: mode_(_mode), device_(_device),
+  motion_threshold_luminance_(100), motion_threshold_count(-1),
+  width_(_width), height_(_height), fps_(_fps), rgb_frame_(NULL)
+{
+	//enumerate();
+
   printf("opening %s\n", _device);
-  if ((fd = open(_device, O_RDWR)) == -1)
-    throw std::runtime_error("couldn't open " + device);
-  memset(&fmt, 0, sizeof(v4l2_format));
-  memset(&cap, 0, sizeof(v4l2_capability));
-  if (ioctl(fd, VIDIOC_QUERYCAP, &cap) < 0)
-    throw std::runtime_error("couldn't query " + device);
-  if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE))
-    throw std::runtime_error(device + " does not support capture");
-  if (!(cap.capabilities & V4L2_CAP_STREAMING))
-    throw std::runtime_error(device + " does not support streaming");
+
+  if ((device_file_h_ = open(_device, O_RDWR)) == -1)
+  {
+    throw std::runtime_error("couldn't open " + device_);
+  }
+
+  memset(&format_, 0, sizeof(v4l2_format));
+  memset(&capability_, 0, sizeof(v4l2_capability));
+
+  if (ioctl(device_file_h_, VIDIOC_QUERYCAP, &capability_) < 0)
+    throw std::runtime_error("couldn't query " + device_);
+  if (!(capability_.capabilities & V4L2_CAP_VIDEO_CAPTURE))
+    throw std::runtime_error(device_ + " does not support capture");
+  if (!(capability_.capabilities & V4L2_CAP_STREAMING))
+    throw std::runtime_error(device_ + " does not support streaming");
+
   // enumerate formats
-  v4l2_fmtdesc f;
-  memset(&f, 0, sizeof(f));
-  f.index = 0;
-  f.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  v4l2_fmtdesc format_desc;
+  memset(&format_desc, 0, sizeof(format_desc));
+  format_desc.index = 0;
+  format_desc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   int ret;
-  while ((ret = ioctl(fd, VIDIOC_ENUM_FMT, &f)) == 0)
+
+  printf("## FORMATS: ##\n");
+
+  while ((ret = ioctl(device_file_h_, VIDIOC_ENUM_FMT, &format_desc)) == 0)
   {
     printf("pixfmt %d = '%4s' desc = '%s'\n",
-           f.index++, (char *)&f.pixelformat, f.description);
+           format_desc.index, (char *)&format_desc.pixelformat, format_desc.description);
+
+    format_desc.index++;
+
     // enumerate frame sizes
     v4l2_frmsizeenum fsize;
     fsize.index = 0;
-    fsize.pixel_format = f.pixelformat;
-    while ((ret = ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &fsize)) == 0)
+    fsize.pixel_format = format_desc.pixelformat;
+    while ((ret = ioctl(device_file_h_, VIDIOC_ENUM_FRAMESIZES, &fsize)) == 0)
     {
       fsize.index++;
       if (fsize.type == V4L2_FRMSIZE_TYPE_DISCRETE)
       {
         printf("  discrete: %ux%u:   ",
                fsize.discrete.width, fsize.discrete.height);
+
         // enumerate frame rates
         v4l2_frmivalenum fival;
         fival.index = 0;
-        fival.pixel_format = f.pixelformat;
+        fival.pixel_format = format_desc.pixelformat;
         fival.width = fsize.discrete.width;
         fival.height = fsize.discrete.height;
-        while ((ret = ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &fival)) == 0)
+        while ((ret = ioctl(device_file_h_, VIDIOC_ENUM_FRAMEINTERVALS, &fival)) == 0)
         {
           fival.index++;
           if (fival.type == V4L2_FRMIVAL_TYPE_DISCRETE)
@@ -90,32 +128,94 @@ Cam::Cam(const char *_device, mode_t _mode, int _width, int _height, int _fps)
       }
     }
   }
+
   if (errno != EINVAL)
     throw std::runtime_error("error enumerating frame formats");
-  fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-  fmt.fmt.pix.width = width;
-  fmt.fmt.pix.height = height;
-  if (mode == MODE_RGB || mode == MODE_YUYV) // we'll convert later
-    fmt.fmt.pix.pixelformat = 'Y' | ('U' << 8) | ('Y' << 16) | ('V' << 24);
+
+  ///////////////////////////////////////////
+
+  struct v4l2_queryctrl queryctrl;
+  struct v4l2_querymenu querymenu;
+
+  memset (&queryctrl, 0, sizeof (queryctrl));
+
+  printf("## CONTROLS: ##\n");
+
+  for (queryctrl.id = V4L2_CID_BASE;
+       queryctrl.id < V4L2_CID_LASTP1;
+       queryctrl.id++) {
+  	if (0 == ioctl (device_file_h_, VIDIOC_QUERYCTRL, &queryctrl)) {
+  		if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED)
+  			continue;
+
+  		printf ("Control '%s'\n", queryctrl.name);
+
+  		//if (queryctrl.type == V4L2_CTRL_TYPE_MENU)
+  		//	enumerate_menu (device_file_h_,queryctrl,querymenu);
+  	} else {
+  		if (errno == EINVAL)
+  			continue;
+
+  		perror ("VIDIOC_QUERYCTRL");
+  		//exit (EXIT_FAILURE);
+  	}
+  }
+
+  for (queryctrl.id = V4L2_CID_PRIVATE_BASE;;
+       queryctrl.id++) {
+  	if (0 == ioctl (device_file_h_, VIDIOC_QUERYCTRL, &queryctrl)) {
+  		if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED)
+  			continue;
+
+  		printf ("Control '%s'\n", queryctrl.name);
+
+  		//if (queryctrl.type == V4L2_CTRL_TYPE_MENU)
+  			//enumerate_menu (device_file_h_,queryctrl,querymenu);
+  	} else {
+  		if (errno == EINVAL)
+  			break;
+
+  		perror ("VIDIOC_QUERYCTRL");
+  		//exit (EXIT_FAILURE);
+  	}
+  }
+
+  //////////////////////////////////////////
+
+  format_.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  format_.fmt.pix.width = width_;
+  format_.fmt.pix.height = height_;
+
+  if (mode_ == MODE_RGB || mode_ == MODE_YUYV) // we'll convert later
+    format_.fmt.pix.pixelformat = 'Y' | ('U' << 8) | ('Y' << 16) | ('V' << 24);
+  else if (mode_ == MODE_BAYER)
+    format_.fmt.pix.pixelformat = 'B' | ('A' << 8) | ('8' << 16) | ('1' << 24);
   else
-    fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_MJPEG;
-  fmt.fmt.pix.field = V4L2_FIELD_ANY;
-  if ((ret = ioctl(fd, VIDIOC_S_FMT, &fmt)) < 0)
+    format_.fmt.pix.pixelformat = V4L2_PIX_FMT_MJPEG;
+
+  format_.fmt.pix.field = V4L2_FIELD_ANY;
+
+  if ((ret = ioctl(device_file_h_, VIDIOC_S_FMT, &format_)) < 0)
     throw std::runtime_error("couldn't set format");
-  if (fmt.fmt.pix.width != width || fmt.fmt.pix.height != height)
+
+  if (format_.fmt.pix.width != width_ || format_.fmt.pix.height != height_)
     throw std::runtime_error("pixel format unavailable");
-  streamparm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-  streamparm.parm.capture.timeperframe.numerator = 1;
-  streamparm.parm.capture.timeperframe.denominator = fps;
-  if ((ret = ioctl(fd, VIDIOC_S_PARM, &streamparm)) < 0)
+
+  stream_parm_.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  stream_parm_.parm.capture.timeperframe.numerator = 1;
+  stream_parm_.parm.capture.timeperframe.denominator = fps_;
+  if ((ret = ioctl(device_file_h_, VIDIOC_S_PARM, &stream_parm_)) < 0)
     throw std::runtime_error("unable to set framerate");
-  v4l2_queryctrl queryctrl;
+  //v4l2_queryctrl queryctrl;
   memset(&queryctrl, 0, sizeof(queryctrl));
+
+  printf("## CONTROLS: ##\n");
+
   uint32_t i = V4L2_CID_BASE;
   while (i != V4L2_CID_LAST_EXTCTR)
   {
     queryctrl.id = i;
-    if ((ret = ioctl(fd, VIDIOC_QUERYCTRL, &queryctrl)) == 0 &&
+    if ((ret = ioctl(device_file_h_, VIDIOC_QUERYCTRL, &queryctrl)) == 0 &&
         !(queryctrl.flags & V4L2_CTRL_FLAG_DISABLED))
     {
       const char *ctrl_type = NULL;
@@ -137,7 +237,7 @@ Cam::Cam(const char *_device, mode_t _mode, int _width, int _height, int _fps)
         memset(&querymenu, 0, sizeof(querymenu));
         querymenu.id = queryctrl.id;
         querymenu.index = 0;
-        while (ioctl(fd, VIDIOC_QUERYMENU, &querymenu) == 0)
+        while (ioctl(device_file_h_, VIDIOC_QUERYMENU, &querymenu) == 0)
         {
           printf("    %d: %s\n", querymenu.index, querymenu.name);
           querymenu.index++;
@@ -160,31 +260,37 @@ Cam::Cam(const char *_device, mode_t _mode, int _width, int _height, int _fps)
   {
     // the commented labels correspond to the controls in guvcview and uvcdynctrl
 
+    //set_control(0x009a0901, 0); // exposure, auto (0 = auto, 1 = manual)
+    //set_control(0x00980900, 4); // brightness
+
+
     //set_control(V4L2_CID_EXPOSURE_AUTO_NEW, 2);
-    set_control(10094851, 1); // Exposure, Auto Priority
-    set_control(10094849, 1); // Exposure, Auto
+    //set_control(10094851, 1); // Exposure, Auto Priority
+    //set_control(10094849, 1); // Exposure, Auto
     //set_control(168062321, 0); //Disable video processing
     //set_control(0x9a9010, 100);
     //set_control(V4L2_CID_EXPOSURE_ABSOLUTE_NEW, 300);
     //set_control(V4L2_CID_BRIGHTNESS, 140);
     //set_control(V4L2_CID_CONTRAST, 40);
     //set_control(V4L2_CID_WHITE_BALANCE_TEMP_AUTO_OLD, 0);
-    set_control(9963776, 128); //Brightness
-    set_control(9963777, 32); //Contrast
-    set_control(9963788, 1); // White Balance Temperature, Auto
-    set_control(9963802, 5984); // White Balance Temperature
-    set_control(9963800, 2);  // power line frequency to 60 hz
-    set_control(9963795, 200); // Gain
-    set_control(9963803, 224); // Sharpness
-    set_control(9963804, 1); //Backlight Compensation
-    set_control(10094850, 250); // Exposure (Absolute)
-    set_control(168062212, 16); //Focus (absolute)
-    set_control(168062213, 3); //LED1 Mode
-    set_control(168062214, 0); //LED1 Frequency
-    set_control(9963778, 32); // Saturation
+    //set_control(V4L2_CID_WHITE_BALANCE_TEMPERATURE_NEW, 0);
+    //set_control(9963776, 128); //Brightness
+    //set_control(9963777, 32); //Contrast
+    //set_control(9963788, 0); // White Balance Temperature, Auto
+    //set_control(9963802, 5984); // White Balance Temperature
+    //set_control(9963800, 2);  // power line frequency to 60 hz
+    //set_control(9963795, 200); // Gain
+    //set_control(9963803, 224); // Sharpness
+    //set_control(9963804, 1); //Backlight Compensation
+    //set_control(10094850, 250); // Exposure (Absolute)
+    //set_control(168062212, 16); //Focus (absolute)
+    //set_control(168062213, 3); //LED1 Mode
+    //set_control(168062214, 0); //LED1 Frequency
+    //set_control(9963778, 32); // Saturation
   }
   catch (std::runtime_error &ex)
   {
+
     printf("ERROR: could not set some settings.  \n %s \n", ex.what());
   }
 
@@ -195,69 +301,77 @@ Cam::Cam(const char *_device, mode_t _mode, int _width, int _height, int _fps)
   printf("jpeg quality: %d\n", v4l2_jpeg.quality);
 */
 
-  memset(&rb, 0, sizeof(rb));
-  rb.count = NUM_BUFFER;
-  rb.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-  rb.memory = V4L2_MEMORY_MMAP;
-  if (ioctl(fd, VIDIOC_REQBUFS, &rb) < 0)
+  memset(&request_buffers_, 0, sizeof(request_buffers_));
+  request_buffers_.count = NUM_BUFFERS;
+  request_buffers_.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  request_buffers_.memory = V4L2_MEMORY_MMAP;
+  if (ioctl(device_file_h_, VIDIOC_REQBUFS, &request_buffers_) < 0)
     throw std::runtime_error("unable to allocate buffers");
-  for (unsigned i = 0; i < NUM_BUFFER; i++)
+  for (unsigned i = 0; i < NUM_BUFFERS; i++)
   {
-    memset(&buf, 0, sizeof(buf));
-    buf.index = i;
-    buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    buf.flags = V4L2_BUF_FLAG_TIMECODE;
-    buf.timecode = timecode;
-    buf.timestamp.tv_sec = 0;
-    buf.timestamp.tv_usec = 0;
-    buf.memory = V4L2_MEMORY_MMAP;
-    if (ioctl(fd, VIDIOC_QUERYBUF, &buf) < 0)
+    memset(&buffer_, 0, sizeof(buffer_));
+    buffer_.index = i;
+    buffer_.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    buffer_.flags = V4L2_BUF_FLAG_TIMECODE;
+    buffer_.timecode = time_code_;
+    buffer_.timestamp.tv_sec = 0;
+    buffer_.timestamp.tv_usec = 0;
+    buffer_.memory = V4L2_MEMORY_MMAP;
+    if (ioctl(device_file_h_, VIDIOC_QUERYBUF, &buffer_) < 0)
       throw std::runtime_error("unable to query buffer");
-    if (buf.length <= 0)
+    if (buffer_.length <= 0)
       throw std::runtime_error("buffer length is bogus");
-    mem[i] = mmap(0, buf.length, PROT_READ, MAP_SHARED, fd, buf.m.offset);
+    buffer_mem_[i] = mmap(0, buffer_.length, PROT_READ, MAP_SHARED, device_file_h_, buffer_.m.offset);
     //printf("buf length = %d at %x\n", buf.length, mem[i]);
-    if (mem[i] == MAP_FAILED)
+    if (buffer_mem_[i] == MAP_FAILED)
       throw std::runtime_error("couldn't map buffer");
   }
-  buf_length = buf.length;
-  for (unsigned i = 0; i < NUM_BUFFER; i++)
+  buffer_length_ = buffer_.length;
+  for (unsigned i = 0; i < NUM_BUFFERS; i++)
   {
-    memset(&buf, 0, sizeof(buf));
-    buf.index = i;
-    buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    buf.flags = V4L2_BUF_FLAG_TIMECODE;
-    buf.timecode = timecode;
-    buf.timestamp.tv_sec = 0;
-    buf.timestamp.tv_usec = 0;
-    buf.memory = V4L2_MEMORY_MMAP;
-    if (ioctl(fd, VIDIOC_QBUF, &buf) < 0)
+    memset(&buffer_, 0, sizeof(buffer_));
+    buffer_.index = i;
+    buffer_.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    buffer_.flags = V4L2_BUF_FLAG_TIMECODE;
+    buffer_.timecode = time_code_;
+    buffer_.timestamp.tv_sec = 0;
+    buffer_.timestamp.tv_usec = 0;
+    buffer_.memory = V4L2_MEMORY_MMAP;
+    if (ioctl(device_file_h_, VIDIOC_QBUF, &buffer_) < 0)
       throw std::runtime_error("unable to queue buffer");
   }
   int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-  if (ioctl(fd, VIDIOC_STREAMON, &type) < 0)
+  if (ioctl(device_file_h_, VIDIOC_STREAMON, &type) < 0)
     throw std::runtime_error("unable to start capture");
-  rgb_frame = new unsigned char[width * height * 3];
-  last_yuv_frame = new unsigned char[width * height * 2];
+  rgb_frame_ = new unsigned char[width_ * height_ * 3];
+  last_yuv_frame_ = new unsigned char[width_ * height_ * 2];
+
+
+  // initialize see3cam extension unit
+  InitExtensionUnit( (const char*)capability_.bus_info );
+  EnableTriggerMode();
 }
 
 Cam::~Cam()
 {
   // stop stream
   int type = V4L2_BUF_TYPE_VIDEO_CAPTURE, ret;
-  if ((ret = ioctl(fd, VIDIOC_STREAMOFF, &type)) < 0)
+  if ((ret = ioctl(device_file_h_, VIDIOC_STREAMOFF, &type)) < 0)
     perror("VIDIOC_STREAMOFF");
-  for (unsigned i = 0; i < NUM_BUFFER; i++)
-    if (munmap(mem[i], buf_length) < 0)
+  for (unsigned i = 0; i < NUM_BUFFERS; i++)
+    if (munmap(buffer_mem_[i], buffer_length_) < 0)
       perror("failed to unmap buffer");
-  close(fd);
-  if (rgb_frame)
+  close(device_file_h_);
+  if (rgb_frame_)
   {
-    delete[] rgb_frame;
-    delete[] last_yuv_frame;
+    delete[] rgb_frame_;
+    delete[] last_yuv_frame_;
   }
-  last_yuv_frame = rgb_frame = NULL;
+  last_yuv_frame_ = rgb_frame_ = NULL;
+
+  UninitExtensionUnit();
 }
+
 
 void Cam::enumerate()
 {
@@ -310,6 +424,7 @@ void Cam::enumerate()
         input_dir = ent2->d_name;
       break;
     }
+    printf("input_dir: %s",(v4l_dev_path + string("/") + input_dir).c_str());
     closedir(d2);
     if (!input_dir.length())
       throw std::runtime_error("couldn't find input dir in " + v4l_dev_path);
@@ -344,6 +459,7 @@ void Cam::enumerate()
     printf("ver = [%s]\n", ver);
   }
   closedir(d);
+
 }
 
 // saturate input into [0, 255]
@@ -359,11 +475,11 @@ int Cam::grab(unsigned char **frame, uint32_t &bytes_used)
   fd_set rdset;
   timeval timeout;
   FD_ZERO(&rdset);
-  FD_SET(fd, &rdset);
+  FD_SET(device_file_h_, &rdset);
   timeout.tv_sec = 1;
   timeout.tv_usec = 0;
   bytes_used = 0;
-  ret = select(fd + 1, &rdset, NULL, NULL, &timeout);
+  ret = select(device_file_h_ + 1, &rdset, NULL, NULL, &timeout);
   if (ret == 0)
   {
     printf("select timeout in grab\n");
@@ -374,22 +490,22 @@ int Cam::grab(unsigned char **frame, uint32_t &bytes_used)
     perror("couldn't grab image");
     return -1;
   }
-  if (!FD_ISSET(fd, &rdset))
+  if (!FD_ISSET(device_file_h_, &rdset))
     return -1;
-  memset(&buf, 0, sizeof(buf));
-  buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-  buf.memory = V4L2_MEMORY_MMAP;
-  if (ioctl(fd, VIDIOC_DQBUF, &buf) < 0)
+  memset(&buffer_, 0, sizeof(buffer_));
+  buffer_.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  buffer_.memory = V4L2_MEMORY_MMAP;
+  if (ioctl(device_file_h_, VIDIOC_DQBUF, &buffer_) < 0)
     throw std::runtime_error("couldn't dequeue buffer");
-  bytes_used = buf.bytesused;
-  if (mode == MODE_RGB)
+  bytes_used = buffer_.bytesused;
+  if (mode_ == MODE_RGB)
   {
     int num_pixels_different = 0; // just look at the Y channel
-    unsigned char *pyuv = (unsigned char *)mem[buf.index];
+    unsigned char *pyuv = (unsigned char *)buffer_mem_[buffer_.index];
     // yuyv is 2 bytes per pixel. step through every pixel pair.
-    unsigned char *prgb = rgb_frame;
-    unsigned char *pyuv_last = last_yuv_frame;
-    for (unsigned i = 0; i < width * height * 2; i += 4)
+    unsigned char *prgb = rgb_frame_;
+    unsigned char *pyuv_last = last_yuv_frame_;
+    for (unsigned i = 0; i < width_ * height_ * 2; i += 4)
     {
       *prgb++ = sat(pyuv[i]+1.402f  *(pyuv[i+3]-128));
       *prgb++ = sat(pyuv[i]-0.34414f*(pyuv[i+1]-128)-0.71414f*(pyuv[i+3]-128));
@@ -397,11 +513,11 @@ int Cam::grab(unsigned char **frame, uint32_t &bytes_used)
       *prgb++ = sat(pyuv[i+2]+1.402f*(pyuv[i+3]-128));
       *prgb++ = sat(pyuv[i+2]-0.34414f*(pyuv[i+1]-128)-0.71414f*(pyuv[i+3]-128));
       *prgb++ = sat(pyuv[i+2]+1.772f*(pyuv[i+1]-128));
-      if ((int)pyuv[i] - (int)pyuv_last[i] > motion_threshold_luminance ||
-          (int)pyuv_last[i] - (int)pyuv[i] > motion_threshold_luminance)
+      if ((int)pyuv[i] - (int)pyuv_last[i] > motion_threshold_luminance_ ||
+          (int)pyuv_last[i] - (int)pyuv[i] > motion_threshold_luminance_)
         num_pixels_different++;
-      if ((int)pyuv[i+2] - (int)pyuv_last[i+2] > motion_threshold_luminance ||
-          (int)pyuv_last[i+2] - (int)pyuv[i+2] > motion_threshold_luminance)
+      if ((int)pyuv[i+2] - (int)pyuv_last[i+2] > motion_threshold_luminance_ ||
+          (int)pyuv_last[i+2] - (int)pyuv[i+2] > motion_threshold_luminance_)
         num_pixels_different++;
 
       // this gives bgr images...
@@ -414,32 +530,49 @@ int Cam::grab(unsigned char **frame, uint32_t &bytes_used)
       *prgb++ = sat(pyuv[i+2]+1.402f*(pyuv[i+3]-128));
       */
     }
-    memcpy(last_yuv_frame, pyuv, width * height * 2);
+    memcpy(last_yuv_frame_, pyuv, width_ * height_ * 2);
     if (num_pixels_different > motion_threshold_count) // default: always true
-      *frame = rgb_frame;
+      *frame = rgb_frame_;
     else
     {
       *frame = NULL; // not enough luminance change
-      release(buf.index); // let go of this image
+      release(buffer_.index); // let go of this image
     }
   }
-  else if (mode == MODE_YUYV)
+  else if (mode_ == MODE_YUYV)
   {
-    *frame = (uint8_t *)mem[buf.index];
+    *frame = (uint8_t *)buffer_mem_[buffer_.index];
   }
   else // mode == MODE_JPEG
   {
     //if (bytes_used > 100)
-      *frame = (unsigned char *)mem[buf.index];
+      *frame = (unsigned char *)buffer_mem_[buffer_.index];
   }
-  return buf.index;
+  return buffer_.index;
 }
 
 void Cam::release(unsigned buf_idx)
 {
-  if (buf_idx < NUM_BUFFER)
-    if (ioctl(fd, VIDIOC_QBUF, &buf) < 0)
+  if (buf_idx < NUM_BUFFERS)
+    if (ioctl(device_file_h_, VIDIOC_QBUF, &buffer_) < 0)
       throw std::runtime_error("couldn't requeue buffer");
+}
+
+int xioctl(int fd, int IOCTL_X, void *arg)
+{
+	const int IOCTL_RETRY = 5;
+	int ret = 0;
+	int tries= IOCTL_RETRY;
+	do
+	{
+		ret = ioctl(fd, IOCTL_X, arg);
+	}
+	while (ret && tries-- &&
+			((errno == EINTR) || (errno == EAGAIN) || (errno == ETIMEDOUT)));
+
+	if (ret && (tries <= 0)) printf("ioctl (%i) retried %i times - giving up: %s)\n", IOCTL_X, IOCTL_RETRY, strerror(errno));
+
+	return (ret);
 }
 
 void Cam::set_control(uint32_t id, int val)
@@ -447,25 +580,41 @@ void Cam::set_control(uint32_t id, int val)
   v4l2_control c;
   c.id = id;
 
-  if (ioctl(fd, VIDIOC_G_CTRL, &c) == 0)
+  // get ctrl name
+  struct v4l2_queryctrl queryctrl;
+  memset (&queryctrl, 0, sizeof (queryctrl));
+  queryctrl.id = id;
+  if (0 == ioctl (device_file_h_, VIDIOC_QUERYCTRL, &queryctrl))
   {
-    printf("current value of %d is %d\n", id, c.value);
-    /*
-    perror("unable to get control");
-    throw std::runtime_error("unable to get control");
-    */
+		if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED)
+		{
+			printf ("Control '%s' is disabled.\n", queryctrl.name);
+			return;
+		}
+	}
+  else
+	{
+    printf("Control #%d does not exist.\n", id);
+  	return;
+	}
+
+  if (ioctl(device_file_h_, VIDIOC_G_CTRL, &c) == 0)
+  {
+    printf("current value of %s is %d\n", queryctrl.name, c.value);
   }
+
+  printf("Setting control '%s' from %d to %d\n", queryctrl.name, c.value, val);
+
   c.value = val;
-  if (ioctl(fd, VIDIOC_S_CTRL, &c) < 0)
+  if (xioctl(device_file_h_, VIDIOC_S_CTRL, &c) < 0)
   {
-    perror("unable to set control");
-    throw std::runtime_error("unable to set control");
+    printf("unable to set control '%s'!\n", queryctrl.name);
   }
 }
 
 void Cam::set_motion_thresholds(int lum, int count)
 {
-  motion_threshold_luminance = lum;
+  motion_threshold_luminance_ = lum;
   motion_threshold_count = count;
 }
 

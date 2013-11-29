@@ -9,6 +9,7 @@
 #include "sensor_msgs/CameraInfo.h"
 #include "camera_info_manager/camera_info_manager.h"
 #include "image_transport/image_transport.h"
+#include "std_msgs/Float64.h"
 
 #include "uvc_camera/camera.h"
 
@@ -52,14 +53,25 @@ Camera::Camera(ros::NodeHandle _comm_nh, ros::NodeHandle _param_nh) :
       pub = it.advertise("image_raw", 1);
 
       info_pub = node.advertise<CameraInfo>("camera_info", 1);
+      exposure_pub = node.advertise<std_msgs::Float64>("exposure", 1, true);
 
       /* initialize the cameras */
-      cam = new uvc_cam::Cam(device.c_str(), uvc_cam::Cam::MODE_RGB, width, height, fps);
-      cam->set_motion_thresholds(100, -1);
+      cam = new uvc_cam::Cam(device.c_str(), uvc_cam::Cam::MODE_BAYER, width, height, fps);
+      //cam->set_motion_thresholds(100, -1);
+      cam->set_control(0x009a0901, 1); // exposure, auto (0 = auto, 1 = manual)
+      cam->set_control(0x00980900, 8); // brightness
+      cam->set_control(0x9a0902, 78); // exposure time 15.6ms
+      std_msgs::Float64 exposure_msg;
+      exposure_msg.data=7.8 * 0.5;
+      exposure_pub.publish( exposure_msg );
 
       /* and turn on the streamer */
       ok = true;
       image_thread = boost::thread(boost::bind(&Camera::feedImages, this));
+
+      std::string time_topic;
+      pnode.getParam("time_topic", time_topic);
+      time_sub = node.subscribe(time_topic, 1, &Camera::timeCb, this );
     }
 
     void Camera::sendInfo(ImagePtr &image, ros::Time time) {
@@ -84,15 +96,26 @@ Camera::Camera(ros::NodeHandle _comm_nh, ros::NodeHandle _param_nh) :
       info_pub.publish(info);
     }
 
+    void Camera::timeCb(std_msgs::Time time)
+    {
+      time_mutex_.lock();
+    	last_time = time.data;
+    	//ROS_INFO_STREAM("Next timestamp: " << last_time);
+      time_mutex_.unlock();
+    }
+
     void Camera::feedImages() {
       unsigned int pair_id = 0;
       while (ok) {
         unsigned char *img_frame = NULL;
         uint32_t bytes_used;
 
-        ros::Time capture_time = ros::Time::now();
-
         int idx = cam->grab(&img_frame, bytes_used);
+
+        time_mutex_.lock();
+        ros::Time capture_time = last_time;
+        time_mutex_.unlock();
+//        ros::Time capture_time = last_time;
 
         /* Read in every frame the camera generates, but only send each
          * (skip_frames + 1)th frame. It's set up this way just because
@@ -104,8 +127,8 @@ Camera::Camera(ros::NodeHandle _comm_nh, ros::NodeHandle _param_nh) :
 
              image->height = height;
              image->width = width;
-             image->step = 3 * width;
-             image->encoding = image_encodings::RGB8;
+             image->step = width;
+             image->encoding = image_encodings::BAYER_GRBG8;
 
              image->header.stamp = capture_time;
              image->header.seq = pair_id;
@@ -114,11 +137,13 @@ Camera::Camera(ros::NodeHandle _comm_nh, ros::NodeHandle _param_nh) :
 
              image->data.resize(image->step * image->height);
 
-             memcpy(&image->data[0], img_frame, width*height * 3);
+             memcpy(&image->data[0], img_frame, image->data.size());
 
              pub.publish(image);
 
              sendInfo(image, capture_time);
+
+             //ROS_INFO_STREAM("capture time: " << capture_time);
 
              ++pair_id;
           }

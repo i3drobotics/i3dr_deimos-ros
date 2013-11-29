@@ -2,7 +2,9 @@
 #include <image_transport/image_transport.h>
 #include "uvc_cam/uvc_cam.h"
 #include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
 #include <camera_info_manager/camera_info_manager.h>
+#include "std_msgs/Time.h"
 
 namespace uvc_camera {
 
@@ -13,6 +15,8 @@ class Camera {
     void sendInfo(sensor_msgs::ImagePtr &image, ros::Time time);
     void feedImages();
     ~Camera();
+
+    void timeCb(std_msgs::Time time);
 
   private:
     ros::NodeHandle node, pnode;
@@ -27,6 +31,12 @@ class Camera {
 
     image_transport::Publisher pub;
     ros::Publisher info_pub;
+    ros::Publisher exposure_pub;
+
+    ros::Subscriber time_sub;
+
+    ros::Time last_time;
+    boost::mutex time_mutex_;
 
     uvc_cam::Cam *cam;
     boost::thread image_thread;
