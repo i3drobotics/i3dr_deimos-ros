@@ -1,0 +1,24 @@
+#
+# Files
+#
+.*
+*.o
+*~
+*.swp
+*.mod.c
+*.order
+*.cmd
+*/Module.symvers
+*/tags
+Module.symvers
+tags
+
+#
+# Directories
+#
+*/.tmp_versions/
+
+#
+# Don't exclude
+#
+!.gitignore
