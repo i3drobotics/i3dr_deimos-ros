@@ -10,6 +10,11 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
+#include <linux/videodev2.h>
+#include <libv4l2.h>
+#include <glib.h>
+#include <iostream>
+#include <limits>
 #include "uvc_cam/uvc_cam.h"
 
 using std::string;
@@ -36,8 +41,6 @@ enumerate_menu (int device_file_h_,
 }
 
 
-
-
 Cam::Cam(const char *_device, mode_t _mode, int _width, int _height, int _fps)
 : mode_(_mode), device_(_device),
   motion_threshold_luminance_(100), motion_threshold_count(-1),
@@ -45,12 +48,18 @@ Cam::Cam(const char *_device, mode_t _mode, int _width, int _height, int _fps)
 {
 	//enumerate();
 
+  GetListofDeviceseCon();
+  
+  index = ( _device[10] ) - 48;
+  
   printf("opening %s\n", _device);
 
   if ((device_file_h_ = open(_device, O_RDWR)) == -1)
   {
     throw std::runtime_error("couldn't open " + device_);
   }
+
+ DeviceInfo = DeviceInstances->listVidDevices[index].bus_info;
 
   memset(&format_, 0, sizeof(v4l2_format));
   memset(&capability_, 0, sizeof(v4l2_capability));
@@ -345,12 +354,52 @@ Cam::Cam(const char *_device, mode_t _mode, int _width, int _height, int _fps)
     throw std::runtime_error("unable to start capture");
   rgb_frame_ = new unsigned char[width_ * height_ * 3];
   last_yuv_frame_ = new unsigned char[width_ * height_ * 2];
+  	y16_frame_ = new unsigned char[width_ * height_ * 2];
+	left_frame_ = new unsigned char[width_ * height_];
+	right_frame_ = new unsigned char[width_ * height_];
+	concat_frame_ = new unsigned char[width_ * height_ * 2];
 
 
   // initialize see3cam extension unit
-  InitExtensionUnit( (const char*)capability_.bus_info );
-  EnableTriggerMode();
+//  InitExtensionUnit( (const char*)capability_.bus_info );
+	if(IsStereoDeviceAvail(DeviceInstances->listVidDevices[index].product))
+	{
+		IsStereo = true;
+	}
+	else
+	{
+		IsStereo = false;
+	}
+	if (true == IsStereo)
+	{
+		if(!InitExtensionUnit(DeviceInfo))
+		{			
+			cout << "InitCamera : Extension Unit Initialisation Failed\n";
+		}
+	}
+
+//  EnableTriggerMode();
 }
+
+BOOL Cam::IsStereoDeviceAvail(char *pid)
+{
+	if(strcmp(pid, See3CAM_STEREO) == 0)
+		return TRUE;
+	else
+		return FALSE;
+}
+
+void Cam::showFirmwareVersion()
+{
+	if ( true == ReadFirmwareVersion( &MajorVersion, &MinorVersion1, &MinorVersion2, &MinorVersion3 ))
+	{
+		printf ("\n\thid_camera.cpp : firmwareversion of the camera is %d : %d : %d : %d\n", MajorVersion, MinorVersion1, MinorVersion2, MinorVersion3);
+	}
+	else
+	{
+		printf ("failed to read firmware version\n");
+	}
+}	
 
 Cam::~Cam()
 {
@@ -369,7 +418,8 @@ Cam::~Cam()
   }
   last_yuv_frame_ = rgb_frame_ = NULL;
 
-  UninitExtensionUnit();
+	DeinitExtensionUnit();
+//  UninitExtensionUnit();
 }
 
 
@@ -467,6 +517,66 @@ inline unsigned char sat(float f)
 {
   return (unsigned char)( f >= 255 ? 255 : (f < 0 ? 0 : f));
 }
+
+int Cam::grabStereo(unsigned char **frame, uint32_t &bytes_used, unsigned char **left_frame = NULL, unsigned char **right_frame = NULL, unsigned char **concat_frame = NULL)
+{
+  *frame = NULL;
+  int ret = 0;
+  fd_set rdset;
+  timeval timeout;
+  FD_ZERO(&rdset);
+  FD_SET(device_file_h_, &rdset);
+  timeout.tv_sec = 1;
+  timeout.tv_usec = 0;
+  bytes_used = 0;
+  ret = select(device_file_h_ + 1, &rdset, NULL, NULL, &timeout);
+  if (ret == 0)
+  {
+    printf("select timeout in grab\n");
+    return -1;
+  }
+  else if (ret < 0)
+  {
+    perror("couldn't grab image");
+    return -1;
+  }
+  if (!FD_ISSET(device_file_h_, &rdset))
+    return -1;
+  memset(&buffer_, 0, sizeof(buffer_));
+  buffer_.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  buffer_.memory = V4L2_MEMORY_MMAP;
+  if (ioctl(device_file_h_, VIDIOC_DQBUF, &buffer_) < 0)
+    throw std::runtime_error("couldn't dequeue buffer");
+  bytes_used = buffer_.bytesused;
+	
+	if (mode_ == MODE_Y16)
+	{
+	   		
+   	  unsigned char *py16 = (unsigned char *)buffer_mem_[buffer_.index];
+//   	 unsigned int var_ = 0;
+  	  for (unsigned int i = 0; i < width_ * height_ * 2; i ++)
+      { 
+    	if (i % 2 == 0)
+    	{	
+    		concat_frame_ [ (i/(2*width_)) * width_ + (i / 2) ] = py16 [i];
+    		right_frame_ [i / 2 ] = py16 [i];
+    	}
+    	else
+    	{
+    		concat_frame_ [ (i/(2*width_)) * width_ + (i / 2) + width_ ] = py16 [i];
+    		left_frame_ [ i / 2 ] = py16 [i];
+    	}
+      }
+      
+      (*concat_frame) = concat_frame_;
+      (*frame) = py16;
+      (*right_frame) = right_frame_;
+      (*left_frame) = left_frame_;
+      
+	}
+  return buffer_.index;
+}
+
 
 int Cam::grab(unsigned char **frame, uint32_t &bytes_used)
 {
@@ -575,12 +685,12 @@ int xioctl(int fd, int IOCTL_X, void *arg)
 	return (ret);
 }
 
-void Cam::set_control(uint32_t id, int val)
+int Cam::get_control(uint32_t id)
 {
   v4l2_control c;
   c.id = id;
-
-  // get ctrl name
+  
+    // get ctrl name
   struct v4l2_queryctrl queryctrl;
   memset (&queryctrl, 0, sizeof (queryctrl));
   queryctrl.id = id;
@@ -589,13 +699,48 @@ void Cam::set_control(uint32_t id, int val)
 		if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED)
 		{
 			printf ("Control '%s' is disabled.\n", queryctrl.name);
-			return;
+			return false;
 		}
 	}
   else
 	{
     printf("Control #%d does not exist.\n", id);
-  	return;
+  	return false;
+	}
+
+  if (ioctl(device_file_h_, VIDIOC_G_CTRL, &c) == 0)
+  {
+    printf("current value of %s is %d\n", queryctrl.name, c.value);
+    return c.value;
+  }
+	else
+	{
+		printf ("failed to get the current value of %s\n", queryctrl.name);
+	}
+	return false;
+}
+
+int Cam::set_control(uint32_t id, int val)
+{
+  v4l2_control c;
+  c.id = id;
+  
+    // get ctrl name
+  struct v4l2_queryctrl queryctrl;
+  memset (&queryctrl, 0, sizeof (queryctrl));
+  queryctrl.id = id;
+  if (0 == ioctl (device_file_h_, VIDIOC_QUERYCTRL, &queryctrl))
+  {
+		if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED)
+		{
+			printf ("Control '%s' is disabled.\n", queryctrl.name);
+			return false;
+		}
+	}
+  else
+	{
+    printf("Control #%d does not exist.\n", id);
+  	return false;
 	}
 
   if (ioctl(device_file_h_, VIDIOC_G_CTRL, &c) == 0)
@@ -610,11 +755,125 @@ void Cam::set_control(uint32_t id, int val)
   {
     printf("unable to set control '%s'!\n", queryctrl.name);
   }
+  return true;
+  
 }
 
 void Cam::set_motion_thresholds(int lum, int count)
 {
   motion_threshold_luminance_ = lum;
   motion_threshold_count = count;
+}
+
+int Cam::GetListofDeviceseCon(void)
+{
+	struct udev_enumerate *enumerate;
+    struct udev_list_entry *devices, *dev_list_entry;
+    struct udev_device *dev;
+
+    int num_dev = 0;
+    int fd = 0;
+    struct v4l2_capability v4l2_cap;
+	struct udev *udev = udev_new();
+
+    if (!udev)
+    {
+        /*use fall through method (sysfs)*/
+        g_print("Can't create udev...using sysfs method\n");
+    }
+
+	DeviceInstances = NULL;
+	DeviceInstances = g_new0( LDevices, 1);
+    DeviceInstances->listVidDevices = NULL;
+
+    /* Create a list of the devices in the 'v4l2' subsystem. */
+    enumerate = udev_enumerate_new(udev);
+    udev_enumerate_add_match_subsystem(enumerate, "video4linux");
+    udev_enumerate_scan_devices(enumerate);
+    devices = udev_enumerate_get_list_entry(enumerate);
+    /* For each item enumerated, print out its information.
+        udev_list_entry_foreach is a macro which expands to
+        a loop. The loop will be executed for each member in
+        devices, setting dev_list_entry to a list entry
+        which contains the device's path in /sys. */
+    udev_list_entry_foreach(dev_list_entry, devices)
+    {
+        const char *path;
+
+        /* Get the filename of the /sys entry for the device
+            and create a udev_device object (dev) representing it */
+        path = udev_list_entry_get_name(dev_list_entry);
+        dev = udev_device_new_from_syspath(udev, path);
+
+        /* usb_device_get_devnode() returns the path to the device node
+            itself in /dev. */
+        const gchar *v4l2_device = udev_device_get_devnode(dev);
+        /* open the device and query the capabilities */
+//#if 0
+        if ((fd = v4l2_open(v4l2_device, O_RDWR | O_NONBLOCK, 0)) < 0)
+//   		        if ((fd = open(v4l2_device, O_RDWR | O_NONBLOCK, 0)) < 0)
+   
+        {
+            g_printerr("ERROR opening V4L2 interface for %s\n", v4l2_device);
+            v4l2_close(fd);
+//		close(fd);
+            continue; /*next dir entry*/
+        }
+
+        if (xioctl(fd, VIDIOC_QUERYCAP, &v4l2_cap) < 0)
+        {
+            perror("VIDIOC_QUERYCAP error");
+            g_printerr("   couldn't query device %s\n", v4l2_device);
+            v4l2_close(fd);
+//		close (fd);
+            continue; /*next dir entry*/
+        }
+        v4l2_close(fd);
+//		close (fd);
+//#endif
+        num_dev++;
+        /* Update the device list*/
+        DeviceInstances->listVidDevices = g_renew(VidDevice,
+            DeviceInstances->listVidDevices,
+            num_dev);
+        DeviceInstances->listVidDevices[num_dev-1].device = g_strdup(v4l2_device);
+	DeviceInstances->listVidDevices[num_dev-1].deviceID = atoi(DeviceInstances->listVidDevices[num_dev-1].device+10);
+        DeviceInstances->listVidDevices[num_dev-1].friendlyname = g_strdup((gchar *) v4l2_cap.card);
+        DeviceInstances->listVidDevices[num_dev-1].bus_info = g_strdup((gchar *) v4l2_cap.bus_info);
+        
+        /* The device pointed to by dev contains information about
+            the v4l2 device. In order to get information about the
+            USB device, get the parent device with the
+            subsystem/devtype pair of "usb"/"usb_device". This will
+            be several levels up the tree, but the function will find
+            it.*/
+        dev = udev_device_get_parent_with_subsystem_devtype(
+                dev,
+                "usb",
+                "usb_device");
+        if (!dev)
+        {
+            cout << "Unable to find parent usb device.";
+            continue;
+        }
+
+        /* From here, we can call get_sysattr_value() for each file
+            in the device's /sys entry. The strings passed into these
+            functions (idProduct, idVendor, etc.) correspond
+            directly to the files in the directory which represents
+            the USB device. Note that USB strings are Unicode, UCS2
+            encoded, but the strings returned from
+            udev_device_get_sysattr_value() are UTF-8 encoded. */
+       
+        DeviceInstances->listVidDevices[num_dev-1].vendor = g_strdup((gchar*)udev_device_get_sysattr_value(dev, "idVendor"));
+        DeviceInstances->listVidDevices[num_dev-1].product =  g_strdup((gchar*)udev_device_get_sysattr_value(dev, "idProduct"));
+
+        udev_device_unref(dev);
+    }
+    /* Free the enumerator object */
+    udev_enumerate_unref(enumerate);
+
+    DeviceInstances->num_devices = num_dev;
+    return(num_dev);
 }
 

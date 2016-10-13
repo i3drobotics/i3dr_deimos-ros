@@ -30,7 +30,9 @@ Camera::Camera(ros::NodeHandle _comm_nh, ros::NodeHandle _param_nh) :
       device = "/dev/video0";
       frame = "camera";
       rotate = false;
-
+      exposure_value = 80;
+      brightness_value = 4;
+      
       /* set up information manager */
       std::string url;
 
@@ -48,22 +50,30 @@ Camera::Camera(ros::NodeHandle _comm_nh, ros::NodeHandle _param_nh) :
       pnode.getParam("height", height);
 
       pnode.getParam("frame_id", frame);
-
+      // changing start
+      pnode.getParam ("exposureValue", exposure_value);
+      brightness_pub = node.advertise<std_msgs::Float64>("get_brightness", 1, true);
+      
       /* advertise image streams and info streams */
       pub = it.advertise("image_raw", 1);
 
       info_pub = node.advertise<CameraInfo>("camera_info", 1);
-      exposure_pub = node.advertise<std_msgs::Float64>("exposure", 1, true);
+      exposure_pub = node.advertise<std_msgs::Float64>("get_exposure", 1, true);
 
       /* initialize the cameras */
       cam = new uvc_cam::Cam(device.c_str(), uvc_cam::Cam::MODE_BAYER, width, height, fps);
       //cam->set_motion_thresholds(100, -1);
       cam->set_control(0x009a0901, 1); // exposure, auto (0 = auto, 1 = manual)
       cam->set_control(0x00980900, 8); // brightness
-      cam->set_control(0x9a0902, 78); // exposure time 15.6ms
-      std_msgs::Float64 exposure_msg;
-      exposure_msg.data=7.8 * 0.5;
-      exposure_pub.publish( exposure_msg );
+     cam->set_control(0x9a0902, exposure_value); // exposure time 15.6ms
+
+    std_msgs::Float64 exposure_msg;
+    exposure_msg.data=(float)exposure_value;
+	exposure_pub.publish( exposure_msg );
+	
+    std_msgs::Float64 brightness_msg;
+    brightness_msg.data=(float)brightness_value;
+	brightness_pub.publish( brightness_msg );
 
       /* and turn on the streamer */
       ok = true;
@@ -72,8 +82,24 @@ Camera::Camera(ros::NodeHandle _comm_nh, ros::NodeHandle _param_nh) :
       std::string time_topic;
       pnode.getParam("time_topic", time_topic);
       time_sub = node.subscribe(time_topic, 1, &Camera::timeCb, this );
-    }
+      exposure_sub = node.subscribe ("set_exposure", 1, &Camera::callBackExposure, this);
+      brightness_sub = node.subscribe ("set_brightness", 1, &Camera::callBackBrightness, this);
+}
 
+	void Camera::callBackExposure (std_msgs::Float64 call_exposure_msg)
+	{
+		exposure_value=(float)call_exposure_msg.data;
+		cam->set_control(0x9a0902, exposure_value);
+		exposure_pub.publish( call_exposure_msg );
+	}
+	
+	void Camera::callBackBrightness (std_msgs::Float64 call_brightness_msg)
+	{
+		brightness_value=(int)call_brightness_msg.data;
+		cam -> set_control( 0x00980900,brightness_value); 
+		brightness_pub.publish( call_brightness_msg );
+	}
+		
     void Camera::sendInfo(ImagePtr &image, ros::Time time) {
       CameraInfoPtr info(new CameraInfo(info_mgr.getCameraInfo()));
 

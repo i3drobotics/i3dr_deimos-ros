@@ -26,6 +26,26 @@
 #include <linux/videodev2.h>
 #include <stdint.h>
 
+/**********************************************************************/
+#include <linux/videodev2.h>
+#include <libv4l2.h>
+#include <glib.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+
+#include <iostream>
+#include <limits>
+#include <stdlib.h>
+
+//Extension unit header
+#include "xunit_lib_tara.h"
+
+//#define TRUE 0
+//#define FALSE 1
+
+using namespace std;
+/*******************************************************************/
+
 extern "C"
 {
 bool InitExtensionUnit(const char*);
@@ -64,17 +84,54 @@ static const int exp_vals[]=
 class Cam
 {
 public:
-  enum mode_t { MODE_RGB, MODE_MJPG, MODE_YUYV, MODE_BAYER } mode_;
+  enum mode_t { MODE_RGB, MODE_MJPG, MODE_YUYV, MODE_BAYER, MODE_Y16 } mode_;
   Cam(const char *device, mode_t _mode = MODE_RGB,
-      int _width = 640, int _height = 480, int _fps = 30);
+    int _width = 640, int _height = 480, int _fps = 30);
+   	UINT8 MajorVersion;
+	UINT8 MinorVersion1;
+	UINT16 MinorVersion2;
+	UINT16 MinorVersion3;
+	bool IsStereo;
+	int index;
   ~Cam();
   static void enumerate();
+  int grabStereo(unsigned char **frame, uint32_t &bytes_used, unsigned char **left_frame , unsigned char **right_frame, unsigned char **concat_frame );
   int grab(unsigned char **frame, uint32_t &bytes_used);
   void release(unsigned buf_idx);
   bool set_auto_white_balance(bool on);
   void set_motion_thresholds(int lum, int count);
-  void set_control(uint32_t id, int val);
+  int set_control(uint32_t id, int val);
+  int get_control(uint32_t id);
+  int GetListofDeviceseCon(void);
+  void showFirmwareVersion();
+  BOOL IsStereoDeviceAvail(char *pid);
 private:
+//***************************************
+
+
+	typedef struct _VidDevice
+	{
+		char *device;
+		char *friendlyname;
+		char *bus_info;
+		char *vendor;
+		char *product;
+		short int deviceID;
+	} VidDevice;
+
+	//Enumerated devices list
+	typedef struct _LDevices
+	{
+		VidDevice *listVidDevices;
+		int num_devices;
+	} LDevices;
+
+	//Stores the device instances of all enumerated devices
+	LDevices *DeviceInstances;
+	
+	char *DeviceInfo;
+//********************	************
+
 
   std::string device_;
 
@@ -95,6 +152,10 @@ private:
   unsigned char *rgb_frame_;
   unsigned char *last_yuv_frame_;
 
+  unsigned char *y16_frame_;
+  unsigned char *left_frame_;
+  unsigned char *right_frame_;
+  unsigned char *concat_frame_;
   /*------------------------- new camera class controls ---------------------*/
   CSU32 V4L2_CTRL_CLASS_USER_NEW = 0x00980000;
   CSU32 V4L2_CID_BASE_NEW = V4L2_CTRL_CLASS_USER_NEW | 0x900;
