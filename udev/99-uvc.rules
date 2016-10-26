@@ -1,3 +1,2 @@
-# Make all e-consystems usb cameras and corresponding hidraw devices writable
-SUBSYSTEM=="usb", ENV{ID_VENDOR_ID}=="2560", MODE="0666"
-KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2560", MODE="0666"
+#Changing the permission to access hidraw
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw",  ATTRS{idVendor}=="2560", MODE="0666"

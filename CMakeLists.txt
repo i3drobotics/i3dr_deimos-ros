@@ -66,13 +66,13 @@ add_library(nodelet_uvc_camera src/nodelets.cpp src/camera.cpp src/stereo.cpp sr
 target_link_libraries(nodelet_uvc_camera ${Boost_LIBRARIES} ${catkin_LIBRARIES} xunit)
 
 add_executable(uvc_camera_node src/camera_node.cpp src/camera.cpp src/uvc_cam.cpp)
-target_link_libraries(uvc_camera_node ${Boost_LIBRARIES} ${catkin_LIBRARIES} xunit xunitTara -lv4l2)
+target_link_libraries(uvc_camera_node ${Boost_LIBRARIES} ${catkin_LIBRARIES} xunit xunitTara -lv4l2 -ludev -lglib-2.0)
 
 add_executable(uvc_stereo_node src/stereo_node.cpp src/stereo.cpp src/uvc_cam.cpp)
-target_link_libraries(uvc_stereo_node ${Boost_LIBRARIES} ${catkin_LIBRARIES} xunit xunitTara -lv4l2)
+target_link_libraries(uvc_stereo_node ${Boost_LIBRARIES} ${catkin_LIBRARIES} xunit xunitTara -lv4l2 -ludev -lglib-2.0)
 
 add_executable(tara_node src/tara_node.cpp src/tara_ros.cpp src/uvc_cam.cpp)
-target_link_libraries(tara_node ${Boost_LIBRARIES} ${catkin_LIBRARIES} xunitTara ${GLIB2_LIBRARIES} -lv4l2 -lyaml-cpp)
+target_link_libraries(tara_node ${Boost_LIBRARIES} ${catkin_LIBRARIES} xunitTara ${GLIB2_LIBRARIES} -lv4l2 -lyaml-cpp -ludev -lglib-2.0)
 
 #############
 ## Install ##
