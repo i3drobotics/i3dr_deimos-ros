@@ -723,7 +723,6 @@ int Cam::set_control(uint32_t id, int val)
 {
 	v4l2_control c;
 	c.id = id;
-//	float val = value/7.0;
 	// get ctrl name
 	struct v4l2_queryctrl queryctrl;
 	memset (&queryctrl, 0, sizeof (queryctrl));
