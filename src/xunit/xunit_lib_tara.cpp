@@ -35,21 +35,21 @@
 
 #define READFIRMWAREVERSION				0x40
 #define GETCAMERA_UNIQUEID				0x41
-	
+
 #define GET_EXPOSURE_VALUE				0x01
 #define SET_EXPOSURE_VALUE				0x02
-	
+
 #define GET_IMU_CONFIG					0x03
 #define SET_IMU_CONFIG					0x04
 #define CONTROL_IMU_VAL					0x05
 #define SEND_IMU_VAL_BUFF				0x06
-	
+
 #define READ_CALIB_REQUEST				0x09
 #define READ_CALIB_DATA					0x0A
 
 #define SET_STREAM_MODE_STEREO			0x0B
 #define GET_STREAM_MODE_STEREO			0x0C
-	
+
 #define IMU_NUM_OF_VAL					0xFF
 #define IMU_ACC_VAL						0xFE
 #define IMU_GYRO_VAL					0xFD
@@ -64,14 +64,14 @@
 //Global IMU variables.
 IMUCONFIG_TypeDef				glIMUConfig;
 IMUDATAINPUT_TypeDef			glIMUInput;
-			
+
 BOOL							g_IsIMUConfigured	= FALSE;
 float							glAccSensMult = 0;
 float							glGyroSensMult = 0;
-			
+
 int 							hid_fd = -1, hid_imu = -1;
 int 							countHidDevices = 0;
-			
+
 unsigned char					g_out_packet_buf[BUFFER_LENGTH];
 unsigned char 					g_in_packet_buf[BUFFER_LENGTH];
 const char						*hid_device;
@@ -98,15 +98,15 @@ void Sleep(unsigned int TimeInMilli)
 
 
 /*
-  **********************************************************************************************************
+ **********************************************************************************************************
  *  MODULE TYPE	:	LIBRAY API 									    *
  *  Name		:	InitExtensionUnit							    *
  *  Parameter1	:	char* (busname)								    *
  *  Returns		:	BOOL (TRUE or FALSE)						    *
  *  Description	:   Finds hidraw device based on the busname and initialize the HID device 		*
-					Application should call this function before calling any other function		*
-  **********************************************************************************************************
-*/
+ Application should call this function before calling any other function		*
+ **********************************************************************************************************
+ */
 BOOL InitExtensionUnit(char *busname)
 {
 	int index, fd, ret, desc_size = 0;
@@ -157,9 +157,9 @@ BOOL InitExtensionUnit(char *busname)
 		}
 
 		/*printf("Report Descriptors:\n");
-		for (i = 0; i < rpt_desc.size; i++)
-			printf("%hhx ", rpt_desc.value[i]);
-		puts("\n");*/
+		  for (i = 0; i < rpt_desc.size; i++)
+		  printf("%hhx ", rpt_desc.value[i]);
+		  puts("\n");*/
 
 
 		/* Get Raw Name */
@@ -168,7 +168,7 @@ BOOL InitExtensionUnit(char *busname)
 			perror("xunit-InitExtensionUnit : HIDIOCGRAWNAME");
 			return FALSE;
 		}
-		
+
 		//printf("Raw Name: %s\n", buf);
 
 		/* Get Physical Location */
@@ -186,11 +186,11 @@ BOOL InitExtensionUnit(char *busname)
 			perror("xunit-InitExtensionUnit : HIDIOCGRAWINFO");
 			return FALSE;
 		}
-		
+
 		/*printf("Raw Info:\n");
-		printf("\tbustype: %d (%s)\n", info.bustype, bus_str(info.bustype));
-		printf("\tvendor: 0x%04hx\n", info.vendor);
-		printf("\tproduct: 0x%04hx\n", info.product);*/
+		  printf("\tbustype: %d (%s)\n", info.bustype, bus_str(info.bustype));
+		  printf("\tvendor: 0x%04hx\n", info.vendor);
+		  printf("\tproduct: 0x%04hx\n", info.product);*/
 
 
 		if(desc_size == DESCRIPTOR_SIZE_ENDPOINT)
@@ -209,7 +209,7 @@ BOOL InitExtensionUnit(char *busname)
 
 
 /*
-  **********************************************************************************************************
+ **********************************************************************************************************
  *  MODULE TYPE	:	LIBRAY API 									    *
  *  Name		:	ReadFirmwareVersion								*
  *  Parameter1	:	unsigned char *		(Major Version)				*
@@ -219,8 +219,8 @@ BOOL InitExtensionUnit(char *busname)
  *  Returns		:	BOOL (TRUE or FALSE)							*
  *  Description	:   Sends the extension unit command for reading firmware version to the UVC device		*
  *					and then device sends back the firmware version will be stored in the variables		*	
-  **********************************************************************************************************
-*/
+ **********************************************************************************************************
+ */
 BOOL ReadFirmwareVersion (UINT8 *pMajorVersion, UINT8 *pMinorVersion1, UINT16 *pMinorVersion2, UINT16 *pMinorVersion3)
 {	
 
@@ -228,7 +228,7 @@ BOOL ReadFirmwareVersion (UINT8 *pMajorVersion, UINT8 *pMinorVersion1, UINT16 *p
 	int ret = 0;
 	unsigned int start, end = 0;
 	unsigned short int sdk_ver=0, svn_ver=0;
-	
+
 	//Initialize the buffer
 	memset(g_out_packet_buf, 0x00, sizeof(g_out_packet_buf));
 
@@ -264,7 +264,7 @@ BOOL ReadFirmwareVersion (UINT8 *pMajorVersion, UINT8 *pMinorVersion1, UINT16 *p
 
 				timeout = FALSE;
 			}
-	 	}
+		}
 		end = GetTickCount();
 		if(end - start > TIMEOUT)
 		{
@@ -278,15 +278,15 @@ BOOL ReadFirmwareVersion (UINT8 *pMajorVersion, UINT8 *pMinorVersion1, UINT16 *p
 
 
 /*
-  **********************************************************************************************************
+ **********************************************************************************************************
  *  MODULE TYPE	:	LIBRAY API 									    *
  *  Name		:	GetCameraUniqueID							    *
  *  Parameter1	:	char * (UniqueID)							    *
  *  Returns		:	BOOL (TRUE or FALSE)						    *
  *  Description	:   Sends the extension unit command for reading serial number to the UVC device		*
  *					and then device sends back the unique ID which will be stored in UniqueID			*	
-  **********************************************************************************************************
-*/
+ **********************************************************************************************************
+ */
 BOOL GetCameraUniqueID (char *UniqueID)
 {	
 
@@ -295,7 +295,7 @@ BOOL GetCameraUniqueID (char *UniqueID)
 	int i,k,tmp = 0;
 	unsigned int start, end = 0;
 	UniqueID[BUFFER_LENGTH] = '\0';
-	
+
 	//Initialize the buffer
 	memset(g_out_packet_buf, 0x00, sizeof(g_out_packet_buf));
 	memset(UniqueID, 0x00, sizeof(UniqueID[BUFFER_LENGTH]));
@@ -328,7 +328,7 @@ BOOL GetCameraUniqueID (char *UniqueID)
 				//printf("\n\nUnique ID is : %s\n", UniqueID);
 				timeout = FALSE;
 			}
-	 	}
+		}
 		end = GetTickCount();
 		if(end - start > TIMEOUT)
 		{
@@ -342,13 +342,13 @@ BOOL GetCameraUniqueID (char *UniqueID)
 
 
 /*
-  **********************************************************************************************************
+ **********************************************************************************************************
  *  MODULE TYPE	:	LIBRAY API 									    *
  *  Name		:	DeinitExtensionUnit							    *
  *  Returns		:	BOOL (TRUE or FALSE)							*
  *  Description	:   To release all the extension unit objects and other internal library objects	    *	
-  **********************************************************************************************************
-*/
+ **********************************************************************************************************
+ */
 BOOL DeinitExtensionUnit()
 {
 	int ret=0;
@@ -373,8 +373,8 @@ BOOL DeinitExtensionUnit()
  *  Returns		:	BOOL (TRUE or FALSE)							*
  *  Description	:   Sends the extension unit command to get the manual exposure value from the camera   *
  *					and then device sends back the exposure value which will be stored in ExposureValue	*
-  **********************************************************************************************************
-*/
+ **********************************************************************************************************
+ */
 BOOL GetManualExposureValue_Stereo(INT32 *ExposureValue)
 {
 	BOOL timeout = TRUE;
@@ -408,19 +408,19 @@ BOOL GetManualExposureValue_Stereo(INT32 *ExposureValue)
 		} else {
 			//printf("%s(): read %d bytes:\n", __func__,ret);
 			if(g_in_packet_buf[0] == CAMERA_CONTROL_STEREO &&
-				g_in_packet_buf[1] == GET_EXPOSURE_VALUE ) {
-					if(g_in_packet_buf[10] == GET_SUCCESS) {
-						*ExposureValue = (INT32)(((g_in_packet_buf[2] & 0xFF) << 24)
-								+ ((g_in_packet_buf[3] & 0xFF) << 16)
-								+ ((g_in_packet_buf[4] & 0xFF) << 8)
-								+ (g_in_packet_buf[5] & 0xFF)
-								);
-						timeout = FALSE;
-					} else if(g_in_packet_buf[10] == GET_FAIL) {
-						return FALSE;
-					}
+					g_in_packet_buf[1] == GET_EXPOSURE_VALUE ) {
+				if(g_in_packet_buf[10] == GET_SUCCESS) {
+					*ExposureValue = (INT32)(((g_in_packet_buf[2] & 0xFF) << 24)
+							+ ((g_in_packet_buf[3] & 0xFF) << 16)
+							+ ((g_in_packet_buf[4] & 0xFF) << 8)
+							+ (g_in_packet_buf[5] & 0xFF)
+							);
+					timeout = FALSE;
+				} else if(g_in_packet_buf[10] == GET_FAIL) {
+					return FALSE;
+				}
 			}
-	 	}
+		}
 		end = GetTickCount();
 		if(end - start > TIMEOUT)
 		{
@@ -434,15 +434,15 @@ BOOL GetManualExposureValue_Stereo(INT32 *ExposureValue)
 
 
 /*
-  **********************************************************************************************************
+ **********************************************************************************************************
  *  MODULE TYPE	:	LIBRAY API 										*
  *  Name		:	SetManualExposureValue_Stereo					*
  *  Parameter1	:	INT32	(ExposureValue)					    	*
  *  Returns		:	BOOL (TRUE or FALSE)							*
  *  Description	:   Sends the extension unit command to set the manual exposure value to the camera   *
  *					The exposure value ranges from 1 to 1000,000					  			  	  *
-  **********************************************************************************************************
-*/
+ **********************************************************************************************************
+ */
 BOOL SetManualExposureValue_Stereo(INT32 ExposureValue)
 {
 	BOOL timeout = TRUE;
@@ -487,14 +487,14 @@ BOOL SetManualExposureValue_Stereo(INT32 ExposureValue)
 		} else {
 			//printf("%s(): read %d bytes:\n", __func__,ret);
 			if(g_in_packet_buf[0] == CAMERA_CONTROL_STEREO &&
-							g_in_packet_buf[1] == SET_EXPOSURE_VALUE){
-					if(g_in_packet_buf[10] == SET_SUCCESS) {
-						timeout = FALSE;
-					} else if(g_in_packet_buf[10] == SET_FAIL) {
-						return FALSE;
-					}
+					g_in_packet_buf[1] == SET_EXPOSURE_VALUE){
+				if(g_in_packet_buf[10] == SET_SUCCESS) {
+					timeout = FALSE;
+				} else if(g_in_packet_buf[10] == SET_FAIL) {
+					return FALSE;
+				}
 			}
-	 	}
+		}
 		end = GetTickCount();
 		if(end - start > TIMEOUT)
 		{
@@ -508,13 +508,13 @@ BOOL SetManualExposureValue_Stereo(INT32 ExposureValue)
 
 
 /*
-  **********************************************************************************************************
+ **********************************************************************************************************
  *  MODULE TYPE	:	LIBRAY API 										*
  *  Name		:	IMUSensitivityConfig							*
  *  Returns		:	void											*
  *  Description	:   Sets the sensitivity to be multiplied in a global variable.  *
-  **********************************************************************************************************
-*/
+ **********************************************************************************************************
+ */
 void IMUSensitivityConfig(IMUCONFIG_TypeDef lIMUConfig)
 {
 	switch (glIMUConfig.ACC_SENSITIVITY_CONFIG * 0x08)
@@ -562,14 +562,14 @@ void IMUSensitivityConfig(IMUCONFIG_TypeDef lIMUConfig)
 }
 
 /*
-  **********************************************************************************************************
+ **********************************************************************************************************
  *  MODULE TYPE	:	LIBRAY API 										*
  *  Name		:	GetIMUConfig									*
  *  Parameter1	:	IMUCONFIG_TypeDef 	(*lIMUConfig)			    *
  *  Returns		:	BOOL (TRUE or FALSE)							*
  *  Description	:   Sends the extension unit command to Get the current IMU configuration.  *
-   **********************************************************************************************************
-*/
+ **********************************************************************************************************
+ */
 BOOL GetIMUConfig(IMUCONFIG_TypeDef *lIMUConfig)
 {
 	BOOL timeout = TRUE;
@@ -603,23 +603,23 @@ BOOL GetIMUConfig(IMUCONFIG_TypeDef *lIMUConfig)
 		} else {
 			//printf("%s(): read %d bytes:\n", __func__,ret);
 			if(g_in_packet_buf[0] == CAMERA_CONTROL_STEREO &&
-				g_in_packet_buf[1] == GET_IMU_CONFIG ) {
-					if(g_in_packet_buf[25] == GET_SUCCESS) {
-						lIMUConfig->IMU_MODE				= g_in_packet_buf[2];
-						lIMUConfig->ACC_AXIS_CONFIG			= g_in_packet_buf[5];
-						lIMUConfig->IMU_ODR_CONFIG			= g_in_packet_buf[6];
-						lIMUConfig->ACC_SENSITIVITY_CONFIG	= g_in_packet_buf[7];
-						lIMUConfig->GYRO_AXIS_CONFIG		= g_in_packet_buf[10];
-						lIMUConfig->GYRO_SENSITIVITY_CONFIG	= g_in_packet_buf[12];
+					g_in_packet_buf[1] == GET_IMU_CONFIG ) {
+				if(g_in_packet_buf[25] == GET_SUCCESS) {
+					lIMUConfig->IMU_MODE				= g_in_packet_buf[2];
+					lIMUConfig->ACC_AXIS_CONFIG			= g_in_packet_buf[5];
+					lIMUConfig->IMU_ODR_CONFIG			= g_in_packet_buf[6];
+					lIMUConfig->ACC_SENSITIVITY_CONFIG	= g_in_packet_buf[7];
+					lIMUConfig->GYRO_AXIS_CONFIG		= g_in_packet_buf[10];
+					lIMUConfig->GYRO_SENSITIVITY_CONFIG	= g_in_packet_buf[12];
 
-						glIMUConfig			= *lIMUConfig;
-						IMUSensitivityConfig(glIMUConfig);
-						g_IsIMUConfigured	= TRUE;
+					glIMUConfig			= *lIMUConfig;
+					IMUSensitivityConfig(glIMUConfig);
+					g_IsIMUConfigured	= TRUE;
 
-						timeout = FALSE;
-					} else if(g_in_packet_buf[25] == GET_FAIL) {
-						return FALSE;
-					}
+					timeout = FALSE;
+				} else if(g_in_packet_buf[25] == GET_FAIL) {
+					return FALSE;
+				}
 			}
 		}
 		end = GetTickCount();
@@ -635,14 +635,14 @@ BOOL GetIMUConfig(IMUCONFIG_TypeDef *lIMUConfig)
 
 
 /*
-  **********************************************************************************************************
+ **********************************************************************************************************
  *  MODULE TYPE	:	LIBRAY API 										*
  *  Name		:	SetIMUConfig									*
  *  Parameter1	:	IMUCONFIG_TypeDef 	(lIMUConfig)			    *
  *  Returns		:	BOOL (TRUE or FALSE)							*
  *  Description	:   Sends the extension unit command to Set custom IMU configuration.  *
-  **********************************************************************************************************
-*/
+ **********************************************************************************************************
+ */
 BOOL SetIMUConfig(IMUCONFIG_TypeDef lIMUConfig)
 {
 	BOOL timeout = TRUE;
@@ -701,7 +701,7 @@ BOOL SetIMUConfig(IMUCONFIG_TypeDef lIMUConfig)
 		}
 
 		if((lIMUConfig.GYRO_SENSITIVITY_CONFIG != IMU_GYRO_SENS_245DPS) && (lIMUConfig.GYRO_SENSITIVITY_CONFIG != IMU_GYRO_SENS_500DPS)
-			&& (lIMUConfig.GYRO_SENSITIVITY_CONFIG != IMU_GYRO_SENS_2000DPS))
+				&& (lIMUConfig.GYRO_SENSITIVITY_CONFIG != IMU_GYRO_SENS_2000DPS))
 		{
 			printf("SetIMUConfig: Invalid GYRO SENSITIVITY config\r\n");
 			return FALSE;
@@ -741,17 +741,17 @@ SKIP_IMU_CONFIG_ACC_GYRO_DISABLE:
 		} else {
 			//printf("%s(): read %d bytes:\n", __func__,ret);
 			if(g_in_packet_buf[0] == CAMERA_CONTROL_STEREO &&
-				g_in_packet_buf[1] == SET_IMU_CONFIG ) {
-					if(g_in_packet_buf[25] == SET_SUCCESS) {
-						glIMUConfig			= lIMUConfig;
-						IMUSensitivityConfig(glIMUConfig);
-						g_IsIMUConfigured	= TRUE;
-						timeout = FALSE;
-					} else if(g_in_packet_buf[25] == SET_FAIL) {
-						return FALSE;
-					}
+					g_in_packet_buf[1] == SET_IMU_CONFIG ) {
+				if(g_in_packet_buf[25] == SET_SUCCESS) {
+					glIMUConfig			= lIMUConfig;
+					IMUSensitivityConfig(glIMUConfig);
+					g_IsIMUConfigured	= TRUE;
+					timeout = FALSE;
+				} else if(g_in_packet_buf[25] == SET_FAIL) {
+					return FALSE;
+				}
 			}
-	 	}
+		}
 		end = GetTickCount();
 		if(end - start > TIMEOUT)
 		{
@@ -765,14 +765,14 @@ SKIP_IMU_CONFIG_ACC_GYRO_DISABLE:
 
 
 /*
-  **********************************************************************************************************
+ **********************************************************************************************************
  *  MODULE TYPE	:	LIBRAY API 										*
  *  Name		:	ControlIMUCapture								*
  *  Parameter1	:	IMUDATAINPUT_TypeDef 	(lIMUInput)				*   
  *  Returns		:	BOOL (TRUE or FALSE)							*
  *  Description	:   Sends the extension unit command to control the output of the IMU.  *
-  **********************************************************************************************************
-*/
+ **********************************************************************************************************
+ */
 BOOL ControlIMUCapture(IMUDATAINPUT_TypeDef *lIMUInput)
 {
 	BOOL timeout = TRUE;
@@ -787,7 +787,7 @@ BOOL ControlIMUCapture(IMUDATAINPUT_TypeDef *lIMUInput)
 	}
 
 	if((lIMUInput->IMU_UPDATE_MODE != IMU_CONT_UPDT_EN) &&
-		(lIMUInput->IMU_UPDATE_MODE != IMU_CONT_UPDT_DIS))
+			(lIMUInput->IMU_UPDATE_MODE != IMU_CONT_UPDT_DIS))
 	{
 		printf("ControlIMUCapture: Write File Failed\r\n");
 		return FALSE;
@@ -825,23 +825,23 @@ BOOL ControlIMUCapture(IMUDATAINPUT_TypeDef *lIMUInput)
 		} else {
 			//printf("%s(): read %d bytes:\n", __func__,ret);
 			if(g_in_packet_buf[0] == CAMERA_CONTROL_STEREO &&
-				g_in_packet_buf[1] == CONTROL_IMU_VAL) {
-					if(g_in_packet_buf[19] == SET_SUCCESS) {						
-						glIMUInput.IMU_UPDATE_MODE		= lIMUInput->IMU_UPDATE_MODE;
-						glIMUInput.IMU_NUM_OF_VALUES	= 0;
-						if(g_IsIMUConfigured == FALSE) {
-							if(!GetIMUConfig(&lIMUConfig)) {
-								printf("ControlIMUCapture: GetIMUConfig Failed\n");
-								return FALSE;
-							}
-							Sleep(10);
+					g_in_packet_buf[1] == CONTROL_IMU_VAL) {
+				if(g_in_packet_buf[19] == SET_SUCCESS) {						
+					glIMUInput.IMU_UPDATE_MODE		= lIMUInput->IMU_UPDATE_MODE;
+					glIMUInput.IMU_NUM_OF_VALUES	= 0;
+					if(g_IsIMUConfigured == FALSE) {
+						if(!GetIMUConfig(&lIMUConfig)) {
+							printf("ControlIMUCapture: GetIMUConfig Failed\n");
+							return FALSE;
 						}
-						timeout = FALSE;
-					} else if(g_in_packet_buf[19] == SET_FAIL) {
-						glIMUInput.IMU_UPDATE_MODE = lIMUInput->IMU_UPDATE_MODE = IMU_CONT_UPDT_DIS;	
-						glIMUInput.IMU_NUM_OF_VALUES = lIMUInput->IMU_NUM_OF_VALUES = IMU_AXES_VALUES_MIN;
-						return FALSE;
+						Sleep(10);
 					}
+					timeout = FALSE;
+				} else if(g_in_packet_buf[19] == SET_FAIL) {
+					glIMUInput.IMU_UPDATE_MODE = lIMUInput->IMU_UPDATE_MODE = IMU_CONT_UPDT_DIS;	
+					glIMUInput.IMU_NUM_OF_VALUES = lIMUInput->IMU_NUM_OF_VALUES = IMU_AXES_VALUES_MIN;
+					return FALSE;
+				}
 			}
 		}
 		end = GetTickCount();
@@ -857,17 +857,18 @@ BOOL ControlIMUCapture(IMUDATAINPUT_TypeDef *lIMUInput)
 
 
 /*
-  **********************************************************************************************************
+ **********************************************************************************************************
  *  MODULE TYPE	:	LIBRAY API 										*
  *  Name		:	GetIMUValueBuffer								*
  *  Parameter1	:	pthread_mutex_t 	  (*IMUDataReadyEvent)		*
  *  Parameter2	:	IMUDATAOUTPUT_TypeDef (*lIMUAxes)			    *
  *  Returns		:	BOOL (TRUE or FALSE)							*
  *  Description	:   Sends the extension unit command to get the axis values from the IMU.  *
-  **********************************************************************************************************
-*/
-BOOL GetIMUValueBuffer(pthread_mutex_t *IMUDataReadyEvent, IMUDATAOUTPUT_TypeDef *lIMUAxes)
+ **********************************************************************************************************
+ */
+BOOL GetIMUValueBuffer(pthread_mutex_t *IMUDataReadyEvent, pthread_cond_t *mutexCondition, IMUDATAOUTPUT_TypeDef *lIMUAxes)
 {
+	printf ("\tin %s func\n", __func__);
 	BOOL timeout = TRUE;
 	int ret = 0;
 	unsigned int start, end = 0;
@@ -897,11 +898,14 @@ BOOL GetIMUValueBuffer(pthread_mutex_t *IMUDataReadyEvent, IMUDATAOUTPUT_TypeDef
 
 	for(lIDofValues = 0;((glIMUInput.IMU_UPDATE_MODE != IMU_CONT_UPDT_DIS) || (glIMUInput.IMU_NUM_OF_VALUES >= IMU_AXES_VALUES_MIN));)
 	{
+//		pthread_mutex_lock(IMUDataReadyEvent);
+//		printf ("in %s function : lock\n",__func__);
 		/* Read the status from the device */
 		timeout = TRUE;
 		start = GetTickCount();
 		while(timeout)
 		{
+		
 			/* Get a report from the device */
 			//memset(g_in_packet_buf,0x00,BUFFER_LENGTH);
 			ret = read(hid_imu, g_in_packet_buf, BUFFER_LENGTH);
@@ -911,47 +915,50 @@ BOOL GetIMUValueBuffer(pthread_mutex_t *IMUDataReadyEvent, IMUDATAOUTPUT_TypeDef
 			} else {
 				//printf("%s(): read %d bytes:\n", __func__,ret);
 				if(g_in_packet_buf[0] == CAMERA_CONTROL_STEREO &&
-					g_in_packet_buf[1] == SEND_IMU_VAL_BUFF) {
-						if(g_in_packet_buf[48] == SET_SUCCESS) {
+						g_in_packet_buf[1] == SEND_IMU_VAL_BUFF) {
+					if(g_in_packet_buf[48] == SET_SUCCESS) {
 
-							lIMUAxes->IMU_VALUE_ID = ++lIDofValues;
+						lIMUAxes->IMU_VALUE_ID = ++lIDofValues;
 
-							if(g_in_packet_buf[4] == IMU_ACC_VAL)
+						if(g_in_packet_buf[4] == IMU_ACC_VAL)
+						{
+							lIMUAxes->accX = (((INT16)((g_in_packet_buf[6]) | (g_in_packet_buf[5]<<8))) * glAccSensMult);
+							lIMUAxes->accY = (((INT16)((g_in_packet_buf[8]) | (g_in_packet_buf[7]<<8))) * glAccSensMult);
+							lIMUAxes->accZ = (((INT16)((g_in_packet_buf[10]) | (g_in_packet_buf[9]<<8))) * glAccSensMult);			
+						}
+
+						if(g_in_packet_buf[15] == IMU_GYRO_VAL)
+						{
+							lIMUAxes->gyroX = (((INT16)((g_in_packet_buf[17]) | (g_in_packet_buf[16]<<8))) * glGyroSensMult);
+							lIMUAxes->gyroY = (((INT16)((g_in_packet_buf[19]) | (g_in_packet_buf[18]<<8))) * glGyroSensMult);
+							lIMUAxes->gyroZ = (((INT16)((g_in_packet_buf[21]) | (g_in_packet_buf[20]<<8))) * glGyroSensMult);
+						}
+
+						if(glIMUInput.IMU_UPDATE_MODE == IMU_CONT_UPDT_EN)
+						{
+							if(lIMUAxes->IMU_VALUE_ID == IMU_AXES_VALUES_MAX)
 							{
-								lIMUAxes->accX = (((INT16)((g_in_packet_buf[6]) | (g_in_packet_buf[5]<<8))) * glAccSensMult);
-								lIMUAxes->accY = (((INT16)((g_in_packet_buf[8]) | (g_in_packet_buf[7]<<8))) * glAccSensMult);
-								lIMUAxes->accZ = (((INT16)((g_in_packet_buf[10]) | (g_in_packet_buf[9]<<8))) * glAccSensMult);			
-							}
-
-							if(g_in_packet_buf[15] == IMU_GYRO_VAL)
-							{
-								lIMUAxes->gyroX = (((INT16)((g_in_packet_buf[17]) | (g_in_packet_buf[16]<<8))) * glGyroSensMult);
-								lIMUAxes->gyroY = (((INT16)((g_in_packet_buf[19]) | (g_in_packet_buf[18]<<8))) * glGyroSensMult);
-								lIMUAxes->gyroZ = (((INT16)((g_in_packet_buf[21]) | (g_in_packet_buf[20]<<8))) * glGyroSensMult);
-							}
-
-							if(glIMUInput.IMU_UPDATE_MODE == IMU_CONT_UPDT_EN)
-							{
-								if(lIMUAxes->IMU_VALUE_ID == IMU_AXES_VALUES_MAX)
-								{
-									lIMUAxes = lIMUAxesInitAdd;
-									lIDofValues = 0;
-								}
-								else
-									lIMUAxes++;
+								lIMUAxes = lIMUAxesInitAdd;
+								lIDofValues = 0;
 							}
 							else
-							{
-								glIMUInput.IMU_NUM_OF_VALUES--;
 								lIMUAxes++;
-							}
-
-							//Setting the event to tell the application the buffer is full.
-							pthread_mutex_unlock(IMUDataReadyEvent);
-							timeout = FALSE;
-						} else if(g_in_packet_buf[48] == SET_FAIL) {
-							return FALSE;
 						}
+						else
+						{
+							glIMUInput.IMU_NUM_OF_VALUES--;
+							lIMUAxes++;
+						}
+
+						//Setting the event to tell the application the buffer is full.
+						pthread_cond_signal(mutexCondition);
+						pthread_mutex_unlock(IMUDataReadyEvent);
+//						printf ("in %s function : unlock\n",__func__);						
+//						sleep(1);						
+						timeout = FALSE;
+					} else if(g_in_packet_buf[48] == SET_FAIL) {
+						return FALSE;
+					}
 				}
 			}
 			end = GetTickCount();
@@ -968,12 +975,14 @@ BOOL GetIMUValueBuffer(pthread_mutex_t *IMUDataReadyEvent, IMUDATAOUTPUT_TypeDef
 	glIMUInput.IMU_NUM_OF_VALUES = lIMUAxes->IMU_VALUE_ID ;
 	lIMUAxes++;
 
+	printf ("return from %s\n", __func__ );
+
 	return TRUE;
 }
 
 
 /*
-  **********************************************************************************************************
+ **********************************************************************************************************
  *  MODULE TYPE	:	LIBRAY API 										*
  *  Name		:	StereoCalibRead									*
  *  Parameter1	:	unsigned char (**in_buffer)						*
@@ -982,8 +991,8 @@ BOOL GetIMUValueBuffer(pthread_mutex_t *IMUDataReadyEvent, IMUDATAOUTPUT_TypeDef
  *  Parameter4	:	int *extFileLength								*
  *  Returns		:	BOOL (TRUE or FALSE)							*
  *  Description	:   Sends the extension unit command to read the calibration files stored in the flash. *
-  **********************************************************************************************************
-*/
+ **********************************************************************************************************
+ */
 BOOL StereoCalibRead(unsigned char **in_buffer, unsigned char **ex_buffer, int *intFileLength, int *extFileLength)
 {
 	BOOL timeout = TRUE;
@@ -993,8 +1002,8 @@ BOOL StereoCalibRead(unsigned char **in_buffer, unsigned char **ex_buffer, int *
 	int lIntFileLength = 0,lExtFileLength = 0;
 	int lIntPckCnt = 0,lExtPckCnt = 0;
 	int lLoopCount = 1;
-	
-	
+
+
 	//1. Issue a Read request - Intrinsic file
 	memset(g_out_packet_buf,0x00,BUFFER_LENGTH);
 
@@ -1022,19 +1031,19 @@ BOOL StereoCalibRead(unsigned char **in_buffer, unsigned char **ex_buffer, int *
 		} else {
 			//printf("%s(): read %d bytes:\n", __func__,ret);
 			if(g_in_packet_buf[0] == CAMERA_CONTROL_STEREO &&
-				g_in_packet_buf[1] == READ_CALIB_REQUEST) {
-					if(g_in_packet_buf[15] == SEE3CAM_STEREO_HID_SUCCESS) {
+					g_in_packet_buf[1] == READ_CALIB_REQUEST) {
+				if(g_in_packet_buf[15] == SEE3CAM_STEREO_HID_SUCCESS) {
 
-						lIntFileLength = (UINT32)(((g_in_packet_buf[7] << 8 ) & 0xFF00) | (g_in_packet_buf[8] & 0xFF));
+					lIntFileLength = (UINT32)(((g_in_packet_buf[7] << 8 ) & 0xFF00) | (g_in_packet_buf[8] & 0xFF));
 
-						lIntPckCnt = lIntFileLength / PCK_SIZE;
-						if(lIntFileLength % PCK_SIZE != 0)
-							lIntPckCnt++;
-						timeout = FALSE;
-					} else if(g_in_packet_buf[15] == SEE3CAM_STEREO_HID_FAIL) {
-						printf("StereoCalibRead: Return Status Failed 1\r\n");
-						return FALSE;
-					}
+					lIntPckCnt = lIntFileLength / PCK_SIZE;
+					if(lIntFileLength % PCK_SIZE != 0)
+						lIntPckCnt++;
+					timeout = FALSE;
+				} else if(g_in_packet_buf[15] == SEE3CAM_STEREO_HID_FAIL) {
+					printf("StereoCalibRead: Return Status Failed 1\r\n");
+					return FALSE;
+				}
 			}
 		}
 		end = GetTickCount();
@@ -1049,17 +1058,17 @@ BOOL StereoCalibRead(unsigned char **in_buffer, unsigned char **ex_buffer, int *
 	//Allocating the in buffer
 	*in_buffer = (unsigned char*)calloc(lIntPckCnt * PCK_SIZE, sizeof(unsigned char));
 	*intFileLength = lIntFileLength;
-	
+
 	if(*in_buffer == NULL)	
 	{
 		printf("Memory Allocation failed Intrinsic file\n");
 		return FALSE;
 	}
-	
+
 
 	//2.Issue a read data - Intrinsic file
 	Sleep(10);
-	
+
 	for(lLoopCount = 1; lLoopCount < lIntPckCnt; )
 	{
 		memset(g_out_packet_buf,0x00,BUFFER_LENGTH);
@@ -1088,24 +1097,24 @@ BOOL StereoCalibRead(unsigned char **in_buffer, unsigned char **ex_buffer, int *
 			} else {
 				//printf("%s(): read %d bytes:\n", __func__,ret);
 				if(g_in_packet_buf[0] == CAMERA_CONTROL_STEREO &&
-					g_in_packet_buf[1] == READ_CALIB_DATA) {
-						if(g_in_packet_buf[7] == SEE3CAM_STEREO_HID_SUCCESS) {
+						g_in_packet_buf[1] == READ_CALIB_DATA) {
+					if(g_in_packet_buf[7] == SEE3CAM_STEREO_HID_SUCCESS) {
 
-							lLoopCount = (UINT32)(((g_in_packet_buf[5] << 8 ) & 0xFF00) | (g_in_packet_buf[6] & 0xFF));		
-							
-							if(lLoopCount == lIntPckCnt)
-							{
-								memcpy(*in_buffer + ((lLoopCount - 1)*PCK_SIZE),&g_in_packet_buf[8],(lIntFileLength % PCK_SIZE));
-								//printf("StereoCalibRead: Write File Passed 2\r\n");
-							}
-							else
-							{
-								memcpy(*in_buffer + ((lLoopCount - 1)*PCK_SIZE),&g_in_packet_buf[8],PCK_SIZE);
-							}
-							timeout = FALSE;
-						} else if(g_in_packet_buf[7] == SEE3CAM_STEREO_HID_FAIL) {
-							return FALSE;
+						lLoopCount = (UINT32)(((g_in_packet_buf[5] << 8 ) & 0xFF00) | (g_in_packet_buf[6] & 0xFF));		
+
+						if(lLoopCount == lIntPckCnt)
+						{
+							memcpy(*in_buffer + ((lLoopCount - 1)*PCK_SIZE),&g_in_packet_buf[8],(lIntFileLength % PCK_SIZE));
+							//printf("StereoCalibRead: Write File Passed 2\r\n");
 						}
+						else
+						{
+							memcpy(*in_buffer + ((lLoopCount - 1)*PCK_SIZE),&g_in_packet_buf[8],PCK_SIZE);
+						}
+						timeout = FALSE;
+					} else if(g_in_packet_buf[7] == SEE3CAM_STEREO_HID_FAIL) {
+						return FALSE;
+					}
 				}
 			}
 			end = GetTickCount();
@@ -1119,8 +1128,8 @@ BOOL StereoCalibRead(unsigned char **in_buffer, unsigned char **ex_buffer, int *
 		Sleep(10);
 	}
 	Sleep(100);
-	
-	
+
+
 	//3. Issue a Read request - Extrinsic file
 	timeout = TRUE;
 	memset(g_out_packet_buf,0x00,BUFFER_LENGTH);
@@ -1148,19 +1157,19 @@ BOOL StereoCalibRead(unsigned char **in_buffer, unsigned char **ex_buffer, int *
 		} else {
 			//printf("%s(): read %d bytes:\n", __func__,ret);
 			if(g_in_packet_buf[0] == CAMERA_CONTROL_STEREO &&
-				g_in_packet_buf[1] == READ_CALIB_REQUEST) {
-					if(g_in_packet_buf[15] == SEE3CAM_STEREO_HID_SUCCESS) {
+					g_in_packet_buf[1] == READ_CALIB_REQUEST) {
+				if(g_in_packet_buf[15] == SEE3CAM_STEREO_HID_SUCCESS) {
 
-						lExtFileLength = (UINT32)(((g_in_packet_buf[7] << 8 ) & 0xFF00) | (g_in_packet_buf[8] & 0xFF));
+					lExtFileLength = (UINT32)(((g_in_packet_buf[7] << 8 ) & 0xFF00) | (g_in_packet_buf[8] & 0xFF));
 
-						lExtPckCnt = lExtFileLength / PCK_SIZE;
-						if(lExtFileLength % PCK_SIZE != 0)
-							lExtPckCnt++;
-						timeout = FALSE;
-					} else if(g_in_packet_buf[15] == SEE3CAM_STEREO_HID_FAIL) {
-						printf("StereoCalibRead: Return Status Failed 1\r\n");
-						return FALSE;
-					}
+					lExtPckCnt = lExtFileLength / PCK_SIZE;
+					if(lExtFileLength % PCK_SIZE != 0)
+						lExtPckCnt++;
+					timeout = FALSE;
+				} else if(g_in_packet_buf[15] == SEE3CAM_STEREO_HID_FAIL) {
+					printf("StereoCalibRead: Return Status Failed 1\r\n");
+					return FALSE;
+				}
 			}
 		}
 		end = GetTickCount();
@@ -1172,18 +1181,18 @@ BOOL StereoCalibRead(unsigned char **in_buffer, unsigned char **ex_buffer, int *
 		}
 	}
 	Sleep(10);
-	
+
 	//Allocating the ex buffer
 	*ex_buffer = (unsigned char*)calloc(lExtPckCnt * PCK_SIZE, sizeof(unsigned char));
 	*extFileLength = lExtFileLength;
-	
+
 	if(*ex_buffer == NULL)	
 	{
 		printf("Memory Allocation failed Intrinsic file\n");
 		return FALSE;
 	}
 
-	
+
 	//4.Issue a read data - Extrinsic file
 	Sleep(10);
 
@@ -1215,24 +1224,24 @@ BOOL StereoCalibRead(unsigned char **in_buffer, unsigned char **ex_buffer, int *
 			} else {
 				//printf("%s(): read %d bytes:\n", __func__,ret);
 				if(g_in_packet_buf[0] == CAMERA_CONTROL_STEREO &&
-					g_in_packet_buf[1] == READ_CALIB_DATA) {
-						if(g_in_packet_buf[7] == SEE3CAM_STEREO_HID_SUCCESS) {
+						g_in_packet_buf[1] == READ_CALIB_DATA) {
+					if(g_in_packet_buf[7] == SEE3CAM_STEREO_HID_SUCCESS) {
 
-							lLoopCount = (UINT32)(((g_in_packet_buf[5] << 8 ) & 0xFF00) | (g_in_packet_buf[6] & 0xFF));		
-							
-							if(lLoopCount == lExtPckCnt)
-							{
-								memcpy(*ex_buffer + ((lLoopCount - 1)*PCK_SIZE),&g_in_packet_buf[8],(lExtFileLength % PCK_SIZE));
-								//printf("StereoCalibRead: Write File Passed 2\r\n");
-							}
-							else
-							{
-								memcpy(*ex_buffer + ((lLoopCount - 1)*PCK_SIZE),&g_in_packet_buf[8],PCK_SIZE);
-							}
-							timeout = FALSE;
-						} else if(g_in_packet_buf[7] == SEE3CAM_STEREO_HID_FAIL) {
-							return FALSE;
+						lLoopCount = (UINT32)(((g_in_packet_buf[5] << 8 ) & 0xFF00) | (g_in_packet_buf[6] & 0xFF));		
+
+						if(lLoopCount == lExtPckCnt)
+						{
+							memcpy(*ex_buffer + ((lLoopCount - 1)*PCK_SIZE),&g_in_packet_buf[8],(lExtFileLength % PCK_SIZE));
+							//printf("StereoCalibRead: Write File Passed 2\r\n");
 						}
+						else
+						{
+							memcpy(*ex_buffer + ((lLoopCount - 1)*PCK_SIZE),&g_in_packet_buf[8],PCK_SIZE);
+						}
+						timeout = FALSE;
+					} else if(g_in_packet_buf[7] == SEE3CAM_STEREO_HID_FAIL) {
+						return FALSE;
+					}
 				}
 			}
 			end = GetTickCount();
@@ -1257,8 +1266,8 @@ BOOL StereoCalibRead(unsigned char **in_buffer, unsigned char **ex_buffer, int *
  *  Parameter1	:	UINT32* (iStreamMode)								*
  *  Returns		:	BOOL (TRUE or FALSE)							*
  *  Description	:   Sends the extension unit command to read the mode in which the camera is set.	*
-  **********************************************************************************************************
-*/
+ **********************************************************************************************************
+ */
 BOOL GetStreamModeStereo(UINT32 *iStreamMode)
 {
 	BOOL timeout = TRUE;
@@ -1292,15 +1301,15 @@ BOOL GetStreamModeStereo(UINT32 *iStreamMode)
 		} else {
 			//printf("%s(): read %d bytes:\n", __func__,ret);
 			if(g_in_packet_buf[0] == CAMERA_CONTROL_STEREO &&
-				g_in_packet_buf[1] == GET_STREAM_MODE_STEREO ) {
-					if(g_in_packet_buf[4] == GET_SUCCESS) {
-						*iStreamMode = g_in_packet_buf[2];
-						timeout = FALSE;
-					} else if(g_in_packet_buf[4] == GET_FAIL) {
-						return FALSE;
-					}
+					g_in_packet_buf[1] == GET_STREAM_MODE_STEREO ) {
+				if(g_in_packet_buf[4] == GET_SUCCESS) {
+					*iStreamMode = g_in_packet_buf[2];
+					timeout = FALSE;
+				} else if(g_in_packet_buf[4] == GET_FAIL) {
+					return FALSE;
+				}
 			}
-	 	}
+		}
 		end = GetTickCount();
 		if(end - start > TIMEOUT)
 		{
@@ -1314,14 +1323,14 @@ BOOL GetStreamModeStereo(UINT32 *iStreamMode)
 
 
 /*
-  **********************************************************************************************************
+ **********************************************************************************************************
  *  MODULE TYPE	:	LIBRAY API 										*
  *  Name		:	SetStreamModeStereo								*
  *  Parameter1	:	UINT32 (iStreamMode)			   					*
  *  Returns		:	BOOL (TRUE or FALSE)							*
  *  Description	:   Sends the extension unit command to set a particular stream mode.	*
-  **********************************************************************************************************
-*/
+ **********************************************************************************************************
+ */
 BOOL SetStreamModeStereo(UINT32 iStreamMode)
 {
 	BOOL timeout = TRUE;
@@ -1335,7 +1344,7 @@ BOOL SetStreamModeStereo(UINT32 iStreamMode)
 	g_out_packet_buf[1] = CAMERA_CONTROL_STEREO; 		/* Report Number */
 	g_out_packet_buf[2] = SET_STREAM_MODE_STEREO; 		/* Report Number */
 	g_out_packet_buf[3] = iStreamMode; 					/* Report Number */
-	
+
 	/* Send a Report to the Device */
 	ret = write(hid_fd, g_out_packet_buf, BUFFER_LENGTH);
 	if (ret < 0) {
@@ -1356,14 +1365,14 @@ BOOL SetStreamModeStereo(UINT32 iStreamMode)
 		} else {
 			//printf("%s(): read %d bytes:\n", __func__,ret);
 			if(g_in_packet_buf[0] == CAMERA_CONTROL_STEREO &&
-							g_in_packet_buf[1] == SET_STREAM_MODE_STEREO){
-					if(g_in_packet_buf[4] == SET_SUCCESS) {
-						timeout = FALSE;
-					} else if(g_in_packet_buf[4] == SET_FAIL) {
-						return FALSE;
-					}
+					g_in_packet_buf[1] == SET_STREAM_MODE_STEREO){
+				if(g_in_packet_buf[4] == SET_SUCCESS) {
+					timeout = FALSE;
+				} else if(g_in_packet_buf[4] == SET_FAIL) {
+					return FALSE;
+				}
 			}
-	 	}
+		}
 		end = GetTickCount();
 		if(end - start > TIMEOUT)
 		{
@@ -1377,63 +1386,63 @@ BOOL SetStreamModeStereo(UINT32 iStreamMode)
 
 
 /*
-  **********************************************************************************************************
+ **********************************************************************************************************
  *  MODULE TYPE	:	LIBRAY API 									    *
  *  Name		:	bus_str										    *
  *  Parameter1	:	int	(bus)									    *
  *  Returns		:	const char *								    *
  *  Description	:   To convert integer bus type to string		    *	
-  **********************************************************************************************************
-*/
+ **********************************************************************************************************
+ */
 const char *bus_str(int bus)
 {
 	switch (bus) {
-	case BUS_USB:
-		return "USB";
-		break;
-	case BUS_HIL:
-		return "HIL";
-		break;
-	case BUS_BLUETOOTH:
-		return "Bluetooth";
-		break;
-	case BUS_VIRTUAL:
-		return "Virtual";
-		break;
-	default:
-		return "Other";
-		break;
+		case BUS_USB:
+			return "USB";
+			break;
+		case BUS_HIL:
+			return "HIL";
+			break;
+		case BUS_BLUETOOTH:
+			return "Bluetooth";
+			break;
+		case BUS_VIRTUAL:
+			return "Virtual";
+			break;
+		default:
+			return "Other";
+			break;
 	}
 }
 
 
 /*
-  **********************************************************************************************************
+ **********************************************************************************************************
  *  MODULE TYPE	:	Internal API 									*
  *  Name		:	GetTicketCount									*
  *  Returns		:	unsigned int									*
  *  Description	:   To return current time in milli seconds	   		*	
-  **********************************************************************************************************
-*/
+ **********************************************************************************************************
+ */
 unsigned int GetTickCount()
 {
-        struct timeval tv;
-        if(gettimeofday(&tv, NULL) != 0)
-                return 0;
+	struct timeval tv;
+	if(gettimeofday(&tv, NULL) != 0)
+		return 0;
 
-        return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+	return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
 }
 
 
 /*
-  **********************************************************************************************************
+ **********************************************************************************************************
  *  MODULE TYPE	:	LIBRAY API 									    *
  *  Name		:	find_hid_device								    *
  *  Parameter1	:	char (*videobusname)						    *
  *  Returns		:	int (SUCCESS or FAILURE)						*
  *  Description	:   To find the first e-con's hid device connected to the linux pc	*	
-  **********************************************************************************************************
-*/
+ **********************************************************************************************************
+ */
 int find_hid_device(char *videobusname)
 {
 	struct udev *udev;
@@ -1442,8 +1451,8 @@ int find_hid_device(char *videobusname)
 	struct udev_device *dev, *pdev;
 	int ret = FAILURE;
 	char buf[256];
-	
-   	/* Create the udev object */
+
+	/* Create the udev object */
 	udev = udev_new();
 	if (!udev) {
 		printf("Can't create udev\n");
@@ -1455,34 +1464,34 @@ int find_hid_device(char *videobusname)
 	udev_enumerate_add_match_subsystem(enumerate, "hidraw");
 	udev_enumerate_scan_devices(enumerate);
 	devices = udev_enumerate_get_list_entry(enumerate);
-	
+
 	/* For each item enumerated, print out its information. udev_list_entry_foreach is a macro which expands to a loop. The loop will be executed for each member in
 	   devices, setting dev_list_entry to a list entry which contains the device's path in /sys. */
 	udev_list_entry_foreach(dev_list_entry, devices) {
 		const char *path;
-		
+
 		/* Get the filename of the /sys entry for the device and create a udev_device object (dev) representing it */
 		path = udev_list_entry_get_name(dev_list_entry);
 		dev = udev_device_new_from_syspath(udev, path);
 
 		/* usb_device_get_devnode() returns the path to the device node itself in /dev. */
 		//printf("Device Node Path: %s\n", udev_device_get_devnode(dev));
-		
+
 		/* The device pointed to by dev contains information about the hidraw device. In order to get information about the USB device, get the parent device with the subsystem/devtype pair of "usb"/"usb_device". This will be several levels up the tree, but the function will find it.*/
 		pdev = udev_device_get_parent_with_subsystem_devtype(
-		       dev,
-		       "usb",
-		       "usb_device");
+				dev,
+				"usb",
+				"usb_device");
 		if (!pdev) {
 			printf("Unable to find parent usb device.");
 			exit(1);
 		}
-	
+
 		/* From here, we can call get_sysattr_value() for each file in the device's /sys entry. The strings passed into these functions (idProduct, idVendor, serial, 			etc.) correspond directly to the files in the /sys directory which represents the USB device. Note that USB strings are Unicode, UCS2 encoded, but the strings    		returned from udev_device_get_sysattr_value() are UTF-8 encoded. */
 		if(!strncmp(udev_device_get_sysattr_value(pdev,"idVendor"), "2560", 4)) {
 			if(!strncmp(udev_device_get_sysattr_value(pdev, "idProduct"), "c114", 4)) {
-					hid_device = udev_device_get_devnode(dev);
-					udev_device_unref(pdev);
+				hid_device = udev_device_get_devnode(dev);
+				udev_device_unref(pdev);
 			}
 		}
 		else
@@ -1524,17 +1533,3 @@ int find_hid_device(char *videobusname)
 
 	return ret;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
