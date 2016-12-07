@@ -866,15 +866,32 @@ BOOL ControlIMUCapture(IMUDATAINPUT_TypeDef *lIMUInput)
  *  Description	:   Sends the extension unit command to get the axis values from the IMU.  *
  **********************************************************************************************************
  */
-BOOL GetIMUValueBuffer(pthread_mutex_t *IMUDataReadyEvent, pthread_cond_t *mutexCondition, IMUDATAOUTPUT_TypeDef *lIMUAxes)
+ 
+  BOOL GetIMUValueBuffer_write()
+ {
+ 	memset(g_out_packet_buf,0x00,BUFFER_LENGTH);
+	g_out_packet_buf[1] = CAMERA_CONTROL_STEREO;
+	g_out_packet_buf[2] = SEND_IMU_VAL_BUFF;
+
+	/* Send a Report to the Device */
+	int ret = write(hid_fd, g_out_packet_buf, BUFFER_LENGTH);
+	if (ret < 0)
+	{
+		perror("xunit-GetIMUValueBuffer : write failed");
+		return FALSE;
+	}
+	else
+	{
+		//printf("%s(): wrote %d bytes\n", __func__,ret);
+	}
+	return TRUE;
+ }
+ 
+BOOL GetIMUValueBuffer( IMUDATAOUTPUT_TypeDef *lIMUAxes )
 {
-	printf ("\tin %s func\n", __func__);
 	BOOL timeout = TRUE;
 	int ret = 0;
 	unsigned int start, end = 0;
-
-	UINT16 lIDofValues = 0;
-	IMUDATAOUTPUT_TypeDef *lIMUAxesInitAdd = lIMUAxes;
 
 	if(glIMUConfig.IMU_MODE == IMU_ACC_GYRO_DISABLE)
 	{
@@ -888,98 +905,69 @@ BOOL GetIMUValueBuffer(pthread_mutex_t *IMUDataReadyEvent, pthread_cond_t *mutex
 	g_out_packet_buf[2] = SEND_IMU_VAL_BUFF;
 
 	/* Send a Report to the Device */
-	ret = write(hid_fd, g_out_packet_buf, BUFFER_LENGTH);
-	if (ret < 0) {
+//	ret = write(hid_fd, g_out_packet_buf, BUFFER_LENGTH);
+	if (ret < 0)
+	{
 		perror("xunit-GetIMUValueBuffer : write failed");
-		return FALSE;
-	} else {
+//		return FALSE;
+	}
+	else
+	{
 		//printf("%s(): wrote %d bytes\n", __func__,ret);
 	}
 
-	for(lIDofValues = 0;((glIMUInput.IMU_UPDATE_MODE != IMU_CONT_UPDT_DIS) || (glIMUInput.IMU_NUM_OF_VALUES >= IMU_AXES_VALUES_MIN));)
+	/* Read the status from the device */
+	timeout = TRUE;
+	start = GetTickCount();
+	while(timeout)
 	{
-//		pthread_mutex_lock(IMUDataReadyEvent);
-//		printf ("in %s function : lock\n",__func__);
-		/* Read the status from the device */
-		timeout = TRUE;
-		start = GetTickCount();
-		while(timeout)
+		/* Get a report from the device */
+		ret = read(hid_imu, g_in_packet_buf, BUFFER_LENGTH);
+		if (ret < 0)
 		{
-		
-			/* Get a report from the device */
-			//memset(g_in_packet_buf,0x00,BUFFER_LENGTH);
-			ret = read(hid_imu, g_in_packet_buf, BUFFER_LENGTH);
-			if (ret < 0) {
-				//printf("Error\n");
-				//perror("read");
-			} else {
-				//printf("%s(): read %d bytes:\n", __func__,ret);
-				if(g_in_packet_buf[0] == CAMERA_CONTROL_STEREO &&
-						g_in_packet_buf[1] == SEND_IMU_VAL_BUFF) {
-					if(g_in_packet_buf[48] == SET_SUCCESS) {
+			//printf("Error\n");
+			//perror("read");
+		}
+		else
+		{
+			if(g_in_packet_buf[0] == CAMERA_CONTROL_STEREO && g_in_packet_buf[1] == SEND_IMU_VAL_BUFF)
+			{
+				if(g_in_packet_buf[48] == SET_SUCCESS)
+				{
+					if(g_in_packet_buf[4] == IMU_ACC_VAL)
+					{
+						lIMUAxes->accX = (((INT16)((g_in_packet_buf[6]) | (g_in_packet_buf[5]<<8))) * glAccSensMult);
+						lIMUAxes->accY = (((INT16)((g_in_packet_buf[8]) | (g_in_packet_buf[7]<<8))) * glAccSensMult);
+						lIMUAxes->accZ = (((INT16)((g_in_packet_buf[10]) | (g_in_packet_buf[9]<<8))) * glAccSensMult);			
+					}
 
-						lIMUAxes->IMU_VALUE_ID = ++lIDofValues;
-
-						if(g_in_packet_buf[4] == IMU_ACC_VAL)
-						{
-							lIMUAxes->accX = (((INT16)((g_in_packet_buf[6]) | (g_in_packet_buf[5]<<8))) * glAccSensMult);
-							lIMUAxes->accY = (((INT16)((g_in_packet_buf[8]) | (g_in_packet_buf[7]<<8))) * glAccSensMult);
-							lIMUAxes->accZ = (((INT16)((g_in_packet_buf[10]) | (g_in_packet_buf[9]<<8))) * glAccSensMult);			
-						}
-
-						if(g_in_packet_buf[15] == IMU_GYRO_VAL)
-						{
-							lIMUAxes->gyroX = (((INT16)((g_in_packet_buf[17]) | (g_in_packet_buf[16]<<8))) * glGyroSensMult);
-							lIMUAxes->gyroY = (((INT16)((g_in_packet_buf[19]) | (g_in_packet_buf[18]<<8))) * glGyroSensMult);
-							lIMUAxes->gyroZ = (((INT16)((g_in_packet_buf[21]) | (g_in_packet_buf[20]<<8))) * glGyroSensMult);
-						}
-
-						if(glIMUInput.IMU_UPDATE_MODE == IMU_CONT_UPDT_EN)
-						{
-							if(lIMUAxes->IMU_VALUE_ID == IMU_AXES_VALUES_MAX)
-							{
-								lIMUAxes = lIMUAxesInitAdd;
-								lIDofValues = 0;
-							}
-							else
-								lIMUAxes++;
-						}
-						else
-						{
-							glIMUInput.IMU_NUM_OF_VALUES--;
-							lIMUAxes++;
-						}
-
-						//Setting the event to tell the application the buffer is full.
-						pthread_cond_signal(mutexCondition);
-						pthread_mutex_unlock(IMUDataReadyEvent);
-//						printf ("in %s function : unlock\n",__func__);						
-//						sleep(1);						
-						timeout = FALSE;
-					} else if(g_in_packet_buf[48] == SET_FAIL) {
+					if(g_in_packet_buf[15] == IMU_GYRO_VAL)
+					{
+						lIMUAxes->gyroX = (((INT16)((g_in_packet_buf[17]) | (g_in_packet_buf[16]<<8))) * glGyroSensMult);
+						lIMUAxes->gyroY = (((INT16)((g_in_packet_buf[19]) | (g_in_packet_buf[18]<<8))) * glGyroSensMult);
+						lIMUAxes->gyroZ = (((INT16)((g_in_packet_buf[21]) | (g_in_packet_buf[20]<<8))) * glGyroSensMult);
+					}
+					timeout = FALSE;
+				} 
+				else
+				{
+					if(g_in_packet_buf[48] == SET_FAIL)
+					{
 						return FALSE;
 					}
 				}
 			}
-			end = GetTickCount();
-			if((end - start) > (2500))
-			{
-				printf("%s(): Timeout occurred\n", __func__);
-				timeout = FALSE;
-				return FALSE;
-			}
+		}
+		end = GetTickCount();
+		if((end - start) > (2500))
+		{
+			printf("%s(): Timeout occurred\n", __func__);
+			timeout = FALSE;
+			return FALSE;
 		}
 	}
-
-	lIMUAxes--;
-	glIMUInput.IMU_NUM_OF_VALUES = lIMUAxes->IMU_VALUE_ID ;
-	lIMUAxes++;
-
-	printf ("return from %s\n", __func__ );
-
-	return TRUE;
+return TRUE;
 }
-
 
 /*
  **********************************************************************************************************

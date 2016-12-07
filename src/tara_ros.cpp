@@ -17,12 +17,9 @@ using namespace sensor_msgs;
 
 namespace uvc_camera {
 
-	IMUDATAINPUT_TypeDef			glIMUInput;
-	BOOL							    glIMUAbortThread;
-	pthread_mutex_t				    IMUDataReadyEvent;
-	pthread_cond_t 					mutexCondition;
+	BOOL	glIMUAbortThread;
 	IMUDATAINPUT_TypeDef lIMUInput;
-	
+
 
 	taraCamera::taraCamera(ros::NodeHandle _comm_nh, ros::NodeHandle _param_nh) :
 		node(_comm_nh), pnode(_param_nh), it(_comm_nh),
@@ -56,22 +53,7 @@ namespace uvc_camera {
 			pnode.getParam("width", width);
 			pnode.getParam("height", height);
 			pnode.getParam("frame_id", frame);
-			pnode.getParam("app", appName);
-			
-			int app;
-			
-			if ( !econ_strcmp (appName.c_str(), "IMU" ))
-			{
-				app = IMU_APP;
-			}
-			else
-			{
-				if (	!econ_strcmp (appName.c_str(), "taraStream" ))
-				{
-					app = TARA_STREAM_APP;
-				}
-			}
-			
+
 			// changing start
 			pnode.getParam ("exposureValue", exposure_value);
 
@@ -80,7 +62,6 @@ namespace uvc_camera {
 			pub_left = it.advertise("left//image_raw", 1);
 			pub_right = it.advertise("right//image_raw", 1);
 			pub_concat = it.advertise("concat", 1);
-
 
 			exposure_pub = node.advertise<std_msgs::Float64>("get_exposure", 10000, true);
 			brightness_pub = node.advertise<std_msgs::Float64>("get_brightness", 1, true);
@@ -135,7 +116,7 @@ namespace uvc_camera {
 			}
 			std_msgs::Float64 exposure_msg;
 			exposure_msg.data=(float)exposure_value;
-			 if ( GetManualExposureValue_Stereo( &exposure_value) == true )
+			if ( GetManualExposureValue_Stereo( &exposure_value) == true )
 			{
 				exposure_msg.data = (float) exposure_value;
 			}
@@ -156,7 +137,7 @@ namespace uvc_camera {
 				printf ("Error while getting brightness\n");
 			}
 			brightness_pub.publish( brightness_msg );
-			
+
 			/* and turn on the streamer */
 			ok = true;
 			image_thread = boost::thread(boost::bind(&taraCamera::feedImages, this));
@@ -165,23 +146,16 @@ namespace uvc_camera {
 			pnode.getParam("time_topic", time_topic);
 			time_sub = node.subscribe("time_topic", 1, &taraCamera::timeCb, this );
 
-			if ( app == TARA_STREAM_APP)
-			{
-				exposure_sub = node.subscribe ("set_exposure", 1, &taraCamera::callBackExposure, this);
-				brightness_sub = node.subscribe ("set_brightness", 1, &taraCamera::callBackBrightness, this);
-			}
-			if (app == IMU_APP)
-			{
-				x_pub = node.advertise<std_msgs::Float64>("get_x", 1, true);
-				y_pub = node.advertise<std_msgs::Float64>("get_y", 1, true);
-				z_pub = node.advertise<std_msgs::Float64>("get_z", 1, true);
-				IMU_thread = boost::thread(boost::bind(&taraCamera::IMU_enable, this));
-			}
+			exposure_sub = node.subscribe ("set_exposure", 1, &taraCamera::callBackExposure, this);
+			brightness_sub = node.subscribe ("set_brightness", 1, &taraCamera::callBackBrightness, this);
 
-}
+			IMU_pub = node.advertise<geometry_msgs::Point>("get_IMU", 1, true);
+			IMU_thread = boost::thread(boost::bind(&taraCamera::IMU_enable, this));
+		}
 
 	void taraCamera::callBackExposure (std_msgs::Float64 call_exposure_msg)
 	{
+		DisableIMU();
 		exposure_value=(float)call_exposure_msg.data;
 		returnValue = SetManualExposureValue_Stereo( exposure_value); 
 		if (true == returnValue)
@@ -192,6 +166,7 @@ namespace uvc_camera {
 		{
 			printf ("setting exposure : FAIL\n");
 		}
+
 		if ( GetManualExposureValue_Stereo( &exposure_value) == true )
 		{
 			call_exposure_msg.data = exposure_value;
@@ -200,11 +175,23 @@ namespace uvc_camera {
 		{
 			printf ("Error while getting exposure\n");
 		}
-		
+
 		exposure_pub.publish( call_exposure_msg );
+
+		SetIMUConfigDefault ();
+		if (GetIMUValueBuffer_write() == true )
+		{
+			cout <<"GetIMUValueBuffer_write success" << endl;
+		}
+		else
+		{
+			cout <<"GetIMUValueBuffer_write failed" << endl;
+		}
 	}
+	
 	void taraCamera::callBackBrightness (std_msgs::Float64 call_brightness_msg)
 	{
+		DisableIMU();
 		brightness_value=(float)call_brightness_msg.data;
 		returnValue = cam -> set_control( V4L2_CID_BRIGHTNESS ,brightness_value); 
 		if (true == returnValue)
@@ -215,7 +202,7 @@ namespace uvc_camera {
 		{
 			printf ("setting brightness : FAIL\n");
 		}
-		
+
 		if ( cam -> get_control ( V4L2_CID_BRIGHTNESS, &brightness_value ) == true)
 		{
 			call_brightness_msg.data = brightness_value;
@@ -225,6 +212,15 @@ namespace uvc_camera {
 			printf ("Error while getting brightness\n");
 		}
 		brightness_pub.publish( call_brightness_msg );
+		SetIMUConfigDefault ();
+		if (GetIMUValueBuffer_write() == true )
+		{
+			cout <<"GetIMUValueBuffer_write success" << endl;
+		}
+		else
+		{
+			cout <<"GetIMUValueBuffer_write failed" << endl;
+		}
 	}
 
 	void taraCamera::sendInfo(ImagePtr &image, ros::Time time) {
@@ -390,7 +386,19 @@ namespace uvc_camera {
 	taraCamera::~taraCamera() {
 		ok = false;
 		image_thread.join();
-		
+		DisableIMU();
+
+		glIMUAbortThread = FALSE;
+
+		//Freeing the memory
+		free(lIMUOutput);
+
+		IMU_thread.join();
+		if (cam) delete cam;
+	}
+
+	BOOL taraCamera::DisableIMU()
+	{
 		glIMUAbortThread = TRUE;
 		lIMUInput.IMU_UPDATE_MODE = IMU_CONT_UPDT_DIS;
 		lIMUInput.IMU_NUM_OF_VALUES = IMU_AXES_VALUES_MIN;
@@ -400,23 +408,9 @@ namespace uvc_camera {
 		if(uStatus == FALSE)			
 		{
 			cout << "ControlIMUCapture Failed\n";
-			//		return FALSE;
+			return FALSE;
 		}
-		
-				//Releasing the threads and mutex
-		pthread_kill(thread1, SIGUSR1);
-		pthread_kill(thread2, SIGUSR1);
-		pthread_mutex_destroy(&IMUDataReadyEvent);
-		glIMUAbortThread = FALSE;
-
-		//Freeing the memory
-		free(lIMUOutput);
-		
-		
-		IMU_thread.join();
-		if (cam) delete cam;
 	}
-
 
 	BOOL taraCamera::LoadCameraMatrix()
 	{
@@ -636,25 +630,6 @@ namespace uvc_camera {
 		return x * x;
 	}
 
-	int kbhit(void)
-	{
-		int i;
-		fd_set fds;
-		struct timeval tv;
-
-		FD_ZERO(&fds);
-		FD_SET(STDIN_FILENO, &fds);
-		tv.tv_sec = tv.tv_usec = 0;
-		i = select(1, &fds, NULL, NULL, &tv);
-		if (i == -1) return(0);
-		if (FD_ISSET(STDIN_FILENO, &fds)) return(1);
-		return(0); 
-	}
-
-	void taraCamera::updateCircles()
-	{
-		cout<<" need to  publish angleX, angleY, angleZ " << endl;
-	}
 	void taraCamera::getInclination(double g_x, double g_y, double g_z, double a_x, double a_y, double a_z)
 	{
 		int w = 0;
@@ -674,7 +649,6 @@ namespace uvc_camera {
 		double RwGyro[3] = { g_x, g_y, g_z };
 		double Awz[2];
 		double Gyro[3];
-
 
 		if (firstSample)
 		{ 
@@ -736,21 +710,13 @@ namespace uvc_camera {
 		angleX = RwEst[0] * HALF_PI * RAD2DEG;
 		angleY = RwEst[1] * HALF_PI * RAD2DEG;
 		angleZ = RwEst[2] * HALF_PI * RAD2DEG;
-		
-//		cout << "angleX : " << angleX << " angleY : " << angleY << " angleZ : " << angleZ << endl;
-		
-		std_msgs::Float64 msg;
 
-		msg.data=(float)angleX;
-		x_pub.publish( msg );
+		geometry_msgs::Point IMUValue;
+		IMUValue.x = angleX;
+		IMUValue.y = angleY;
+		IMUValue.z = angleZ;
+		IMU_pub.publish(IMUValue);
 
-		msg.data=(float)angleY;
-		y_pub.publish( msg );
-
-		msg.data=(float)angleZ;
-		z_pub.publish( msg );
-
-		
 	}
 	double taraCamera::GetIMUIntervalTime(IMUCONFIG_TypeDef	lIMUConfig)
 	{
@@ -833,82 +799,9 @@ namespace uvc_camera {
 		return;
 	}
 
-	/* Killing the thread */
-	void KillThread(int sig)
+	void taraCamera::SetIMUConfigDefault()
 	{
-		pthread_exit(0);
-	}
-
-	void* GetIMUValueThread(void *lpParameter) 
-	{
-		IMUDATAOUTPUT_TypeDef *lIMUOutput = (IMUDATAOUTPUT_TypeDef *)lpParameter ;
-		signal(SIGUSR1, KillThread);
-		
-		//HID command
-		if(GetIMUValueBuffer(&IMUDataReadyEvent , &mutexCondition, lIMUOutput))
-		{
-			cout << "GetIMUValueBuffer success\n";	
-		}
-		else
-		{
-			cout << "GetIMUValueBuffer Ended\n";
-		}
-		cout << "after GetIMUValueBuffer func \n";	
-		return NULL;
-
-	}
-
-	void* UpdateIMUValueThread(void *lpParameter) 
-	{
-		struct IMU_classPointer *IMU_classPointer_var_pointer;
-		IMUDATAOUTPUT_TypeDef *lIMUOutputAdd, *lIMUOutput = NULL;
-	
-		IMU_classPointer_var_pointer = (struct IMU_classPointer *)lpParameter;
-		lIMUOutputAdd = lIMUOutput = (IMUDATAOUTPUT_TypeDef*)(IMU_classPointer_var_pointer -> lIMUOutput_struct);
-
-		signal(SIGUSR1, KillThread);
-
-		//Blocking call waits for unlock event
-		for( ;((glIMUAbortThread == FALSE)  && ((glIMUInput.IMU_UPDATE_MODE == IMU_CONT_UPDT_EN) || 
-						(lIMUOutput->IMU_VALUE_ID <= glIMUInput.IMU_NUM_OF_VALUES))) ; )
-		{
-			if(glIMUInput.IMU_UPDATE_MODE != IMU_CONT_UPDT_DIS)
-			{
-				pthread_mutex_lock(&IMUDataReadyEvent);
-//				printf ("\t%s lock\n", __func__);
-			}	
-				pthread_cond_wait(&mutexCondition, &IMUDataReadyEvent);
-//				printf ("in %s function : lock\n", __func__ );
-			
-
-			//Calculating angles based on the current raw values from IMU			
-			(IMU_classPointer_var_pointer -> classPointer) -> getInclination(lIMUOutput->gyroX, lIMUOutput->gyroY, lIMUOutput->gyroZ,
-					lIMUOutput->accX, lIMUOutput->accY, lIMUOutput->accZ);
-			//Round robin mechanism to use the same buffer
-			if(lIMUOutput->IMU_VALUE_ID < IMU_AXES_VALUES_MAX) 
-				lIMUOutput++;
-			else
-				lIMUOutput = lIMUOutputAdd;	
-				
-			pthread_mutex_unlock(&IMUDataReadyEvent);
-//				printf ("in %s function : unlock\n", __func__ );			
-		}
-		return NULL;
-	}
-
-//	#if 1
-	void taraCamera::IMU_enable()
-	{
-		
-		cout << endl  << "		IMU Sample Application " << endl  << endl;
-		cout << " Application to illustrate the IMU unit LSM6DS0 integrated with Tara Camera" << endl;
-		cout << " Demonstrating the rotations of camera around x-axis and y-axis " << endl;
-		cout << " IMU values are limited from -90 to +90 degrees for illustration " << endl << endl;
-
-//		IMUDATAINPUT_TypeDef lIMUInput;
-//		IMUCONFIG_TypeDef lIMUConfig;
 		UINT8 uStatus = 0;
-
 		//Configuring IMU rates
 		lIMUConfig.IMU_MODE = IMU_ACC_GYRO_ENABLE;
 		lIMUConfig.ACC_AXIS_CONFIG = IMU_ACC_X_Y_Z_ENABLE;
@@ -953,25 +846,19 @@ namespace uvc_camera {
 			cout << "ControlIMUCapture Failed\n";
 			return ;
 		}
-		else
-		{
-			glIMUInput = lIMUInput;
-		}
-#if 1
-		//Getting the IMU values
-//		IMUDATAOUTPUT_TypeDef *lIMUOutput = NULL;
+	}
 
-//		pthread_t thread1, thread2;
-		
+	void taraCamera::IMU_enable()
+	{
+		cout << endl  << "		IMU Sample Application " << endl  << endl;
+		cout << " Application to illustrate the IMU unit LSM6DS0 integrated with Tara Camera" << endl;
+		cout << " Demonstrating the rotations of camera around x-axis and y-axis " << endl;
+		cout << " IMU values are limited from -90 to +90 degrees for illustration " << endl << endl;
+
+		SetIMUConfigDefault();
+
 		//Allocating buffers for output structure			
-		if(glIMUInput.IMU_UPDATE_MODE == IMU_CONT_UPDT_EN)
-		{
-			lIMUOutput = (IMUDATAOUTPUT_TypeDef*)malloc(IMU_AXES_VALUES_MAX * sizeof(IMUDATAOUTPUT_TypeDef));
-		}
-		else 
-		{
-			lIMUOutput = (IMUDATAOUTPUT_TypeDef*)malloc(1 * sizeof(IMUDATAOUTPUT_TypeDef));
-		}
+		lIMUOutput = (IMUDATAOUTPUT_TypeDef*)malloc(1 * sizeof(IMUDATAOUTPUT_TypeDef));
 
 		//Memory validation
 		if(lIMUOutput == NULL)
@@ -981,48 +868,28 @@ namespace uvc_camera {
 		}
 
 		lIMUOutput->IMU_VALUE_ID = 0;
-		cout << "\nHit Enter key to stop\n";
 
-		//Mutex initialization
-		pthread_mutex_init(&IMUDataReadyEvent, NULL);
-		pthread_mutex_lock(&IMUDataReadyEvent);
-		
-		//Thread creation
-
-		if(pthread_create(&thread1, NULL, GetIMUValueThread, (void*) lIMUOutput) != 0)
+		if (GetIMUValueBuffer_write() == true )
 		{
-			cout << "Get IMU value thread creation failed\n";	
+			cout <<"GetIMUValueBuffer_write success" << endl;
 		}
 		else
 		{
-			cout << "Get IMU value thread creation success\n";
+			cout <<"GetIMUValueBuffer_write failed" << endl;
 		}
 
-		struct IMU_classPointer IMU_classPointer_var;
-		
-		IMU_classPointer_var.lIMUOutput_struct = lIMUOutput;
-		IMU_classPointer_var.classPointer = this;
-		
-		cout << "calling UpdateIMUValueThread func " << endl;
-		if(pthread_create(&thread2, NULL, &UpdateIMUValueThread, (void*)&IMU_classPointer_var) != 0)
+		while (ros::ok() )
 		{
-			cout << "Update IMU value thread creation failed\n";	
-//			return NULL;
-			return;
+			//HID command
+			if( !GetIMUValueBuffer ( lIMUOutput ) )
+			{
+				cout << "GetIMUValueBuffer failed\n";
+			}
+			//Calculating angles based on the current raw values from IMU			
+			getInclination(lIMUOutput->gyroX, lIMUOutput->gyroY, lIMUOutput->gyroZ, lIMUOutput->accX, lIMUOutput->accY, lIMUOutput->accZ);
 		}
-		else
-		{
-			cout << "Update IMU value thread creation success\n";	
-		}
-	#endif
 	}
-//}
-/*
-	void taraCamera::IMU_function()
-	{
-			IMU_thread = boost::thread(boost::bind( &taraCamera::IMU_enable, this));		
-	}
-*/
+
 	int taraCamera::econ_strcmp (const char *str1,const char *str2)
 	{
 		int iter = 0;
@@ -1040,7 +907,7 @@ namespace uvc_camera {
 				}
 			}
 		}
-		
+
 		if ( str1 [iter] > str2 [iter] )
 		{
 			return 1;
@@ -1057,5 +924,4 @@ namespace uvc_camera {
 			}
 		}
 	}
-
 };
