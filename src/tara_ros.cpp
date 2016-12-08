@@ -125,6 +125,7 @@ namespace uvc_camera {
 			else
 			{
 				printf ("setting exposure : FAIL\n");
+				
 			}
 			
 			std_msgs::Float64 exposure_msg;
@@ -920,7 +921,11 @@ namespace uvc_camera {
 	
 	BOOL taraCamera::checkFirmware (UINT8 MajorVersion, UINT8 MinorVersion1, UINT16 MinorVersion2, UINT16 MinorVersion3)
 	{
-		if ( MajorVersion >= MajorVersion_t)
+		if ( MajorVersion > MajorVersion_t)
+		{
+			return 1;
+		}
+		else
 		{
 			if ( MinorVersion1 > MinorVersion1_t)
 			{
@@ -938,9 +943,12 @@ namespace uvc_camera {
 					{
 						return 1;
 					}
+					else
+					{
+						return 0;
+					}
 				}
 			}
 		}
-		return 0;
 	}
 };
