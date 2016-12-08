@@ -17,7 +17,6 @@ using namespace sensor_msgs;
 
 namespace uvc_camera {
 
-	BOOL	glIMUAbortThread;
 	IMUDATAINPUT_TypeDef lIMUInput;
 
 
@@ -39,7 +38,6 @@ namespace uvc_camera {
 			exposure_value = 1;
 			brightness_value = 4;
 			// for IMU
-			glIMUAbortThread = FALSE;
 			glIMU_Interval = 0.0f;
 
 			angleX = 0.0f;
@@ -63,7 +61,7 @@ namespace uvc_camera {
 			pub_right = it.advertise("right//image_raw", 1);
 			pub_concat = it.advertise("concat", 1);
 
-			exposure_pub = node.advertise<std_msgs::Float64>("get_exposure", 10000, true);
+			exposure_pub = node.advertise<std_msgs::Float64>("get_exposure", 1, true);
 			brightness_pub = node.advertise<std_msgs::Float64>("get_brightness", 1, true);
 
 			std::string url;
@@ -104,7 +102,7 @@ namespace uvc_camera {
 			{
 				printf ("setting brightness : FAIL\n");
 			}
-
+exposure_value = 2;		
 			returnValue = SetManualExposureValue_Stereo( exposure_value); // exposure time 15.6ms
 			if (true == returnValue)
 			{
@@ -113,6 +111,37 @@ namespace uvc_camera {
 			else
 			{
 				printf ("setting exposure : FAIL\n");
+				if ( exposure_value == 1 && !checkFirmware (cam -> MajorVersion, cam -> MinorVersion1, cam -> MinorVersion2, cam -> MinorVersion3 ) )
+				{
+					printf ( "This version of device doesn't supports auto exposure.\nSetting exposure to 15000\n" );
+					exposure_value = 15000;
+					returnValue = SetManualExposureValue_Stereo( exposure_value); // exposure time 15.6ms
+					if (true == returnValue)
+					{
+						printf ("setting exposure : SUCCESS\n");
+					}
+					else
+					{
+						printf ("setting exposure : FAIL\n");
+					}
+				}
+				else
+				{
+					if ( exposure_value < 10)
+					{
+						printf ( "Setting exposure to 15000\n");
+						exposure_value = 15000;
+						returnValue = SetManualExposureValue_Stereo( exposure_value); // exposure time 15.6ms
+						if (true == returnValue)
+						{
+							printf ("setting exposure : SUCCESS\n");
+						}
+						else
+						{
+							printf ("setting exposure : FAIL\n");
+						}
+					}
+				}
 			}
 			std_msgs::Float64 exposure_msg;
 			exposure_msg.data=(float)exposure_value;
@@ -178,12 +207,8 @@ namespace uvc_camera {
 
 		exposure_pub.publish( call_exposure_msg );
 
-		SetIMUConfigDefault ();
-		if (GetIMUValueBuffer_write() == true )
-		{
-			cout <<"GetIMUValueBuffer_write success" << endl;
-		}
-		else
+		SetIMUConfigDefaultEnable ();
+		if (GetIMUValueBuffer_write() == false )
 		{
 			cout <<"GetIMUValueBuffer_write failed" << endl;
 		}
@@ -212,12 +237,8 @@ namespace uvc_camera {
 			printf ("Error while getting brightness\n");
 		}
 		brightness_pub.publish( call_brightness_msg );
-		SetIMUConfigDefault ();
-		if (GetIMUValueBuffer_write() == true )
-		{
-			cout <<"GetIMUValueBuffer_write success" << endl;
-		}
-		else
+		SetIMUConfigDefaultEnable ();
+		if (GetIMUValueBuffer_write() == false )
 		{
 			cout <<"GetIMUValueBuffer_write failed" << endl;
 		}
@@ -388,8 +409,6 @@ namespace uvc_camera {
 		image_thread.join();
 		DisableIMU();
 
-		glIMUAbortThread = FALSE;
-
 		//Freeing the memory
 		free(lIMUOutput);
 
@@ -399,7 +418,6 @@ namespace uvc_camera {
 
 	BOOL taraCamera::DisableIMU()
 	{
-		glIMUAbortThread = TRUE;
 		lIMUInput.IMU_UPDATE_MODE = IMU_CONT_UPDT_DIS;
 		lIMUInput.IMU_NUM_OF_VALUES = IMU_AXES_VALUES_MIN;
 
@@ -799,7 +817,7 @@ namespace uvc_camera {
 		return;
 	}
 
-	void taraCamera::SetIMUConfigDefault()
+	void taraCamera::SetIMUConfigDefaultEnable()
 	{
 		UINT8 uStatus = 0;
 		//Configuring IMU rates
@@ -819,17 +837,12 @@ namespace uvc_camera {
 		}
 		else
 		{
-			cout << "SetIMUConfig success\n";
 			//Reading the configuration to verify the values are set 
 			uStatus = GetIMUConfig(&lIMUConfig);
 			if(!uStatus)			
 			{
 				cout << "GetIMUConfig Failed\n";			
 				return ;
-			}
-			else
-			{
-				cout << "GetIMUConfig success\n";
 			}
 			//Finding the sampling interval time
 			glIMU_Interval = GetIMUIntervalTime(lIMUConfig);
@@ -855,7 +868,7 @@ namespace uvc_camera {
 		cout << " Demonstrating the rotations of camera around x-axis and y-axis " << endl;
 		cout << " IMU values are limited from -90 to +90 degrees for illustration " << endl << endl;
 
-		SetIMUConfigDefault();
+		SetIMUConfigDefaultEnable();
 
 		//Allocating buffers for output structure			
 		lIMUOutput = (IMUDATAOUTPUT_TypeDef*)malloc(1 * sizeof(IMUDATAOUTPUT_TypeDef));
@@ -869,11 +882,7 @@ namespace uvc_camera {
 
 		lIMUOutput->IMU_VALUE_ID = 0;
 
-		if (GetIMUValueBuffer_write() == true )
-		{
-			cout <<"GetIMUValueBuffer_write success" << endl;
-		}
-		else
+		if (GetIMUValueBuffer_write() == false )
 		{
 			cout <<"GetIMUValueBuffer_write failed" << endl;
 		}
@@ -923,5 +932,31 @@ namespace uvc_camera {
 				return 0;
 			}
 		}
+	}
+	
+	BOOL taraCamera::checkFirmware (UINT8 MajorVersion, UINT8 MinorVersion1, UINT16 MinorVersion2, UINT16 MinorVersion3)
+	{
+		if ( MajorVersion >= 1)
+		{
+			if ( MinorVersion1 > 2)
+			{
+				return 1;
+			}
+			else
+			{
+				if ( MinorVersion2 > 131 )
+				{
+					return 1;
+				}
+				else
+				{
+					if ( MinorVersion3 > 652 )
+					{
+						return 1;
+					}
+				}
+			}
+		}
+		return 0;
 	}
 };

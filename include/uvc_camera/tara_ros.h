@@ -23,7 +23,6 @@ using namespace std;
 
 namespace uvc_camera {
 
-	//Keyboard hit detection
 	void Sleep(unsigned int TimeInMilli);
 
 	class taraCamera {
@@ -93,12 +92,13 @@ namespace uvc_camera {
 
 			void callBackExposure(std_msgs::Float64 call_exposure_value);
 			void callBackBrightness(std_msgs::Float64 call_brightness_value);
-			void SetIMUConfigDefault();
+			void SetIMUConfigDefaultEnable();
 			void IMU_enable();    
 			int econ_strcmp (const char * str1, const char *str2);
 			/*  Returns the interval time for sampling the values of the IMU. */
 			double GetIMUIntervalTime(IMUCONFIG_TypeDef	lIMUConfig);
 			BOOL DisableIMU();
+			BOOL checkFirmware (UINT8 MajorVersion, UINT8 MinorVersion1, UINT16 MinorVersion2, UINT16 MinorVersion3);		//Returns 1 if firmware supports auto exposure, else 0;
 
 	};
 
