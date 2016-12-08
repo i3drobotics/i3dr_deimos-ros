@@ -439,8 +439,8 @@ BOOL GetManualExposureValue_Stereo(INT32 *ExposureValue)
  *  Name		:	SetManualExposureValue_Stereo					*
  *  Parameter1	:	INT32	(ExposureValue)					    	*
  *  Returns		:	BOOL (TRUE or FALSE)							*
- *  Description	:   Sends the extension unit command to set the manual exposure value to the camera   *
- *					The exposure value ranges from 1 to 1000,000					  			  	  *
+ *  Description	:   	Sends the extension unit command to set the manual exposure value to the camera   *
+ *					The exposure value ranges from 10 to 1000,000 and for auto exposure, exposure value is 1				  			  	  *
  **********************************************************************************************************
  */
 BOOL SetManualExposureValue_Stereo(INT32 ExposureValue)

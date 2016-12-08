@@ -18,8 +18,12 @@ using namespace std;
 #define		HALF_PI				(M_PI / 2)
 #define		DEG2RAD				(M_PI / 180.f)
 #define		RAD2DEG				(180.f / M_PI)
-#define 		TARA_STREAM_APP	0
-#define 		IMU_APP				1
+
+//	1.2.131.652 is the last firmware version of Tara that doesn't support auto exposure.
+#define 		MajorVersion_t		1
+#define 		MinorVersion1_t	2
+#define 		MinorVersion2_t	131
+#define 		MinorVersion3_t	652
 
 namespace uvc_camera {
 

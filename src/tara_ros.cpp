@@ -102,8 +102,22 @@ namespace uvc_camera {
 			{
 				printf ("setting brightness : FAIL\n");
 			}
-exposure_value = 2;		
+
+			if( ( exposure_value > SEE3CAM_STEREO_EXPOSURE_MAX) || (exposure_value < SEE3CAM_STEREO_EXPOSURE_MIN) )
+			{
+				cout << "Exposure value is out of range" << endl;
+				if (checkFirmware (cam -> MajorVersion, cam -> MinorVersion1, cam -> MinorVersion2, cam -> MinorVersion3 ))
+				{
+					exposure_value = 1;
+				}
+				else
+				{
+					exposure_value = 15000;
+				}
+			}
+
 			returnValue = SetManualExposureValue_Stereo( exposure_value); // exposure time 15.6ms
+
 			if (true == returnValue)
 			{
 				printf ("setting exposure : SUCCESS\n");
@@ -111,38 +125,8 @@ exposure_value = 2;
 			else
 			{
 				printf ("setting exposure : FAIL\n");
-				if ( exposure_value == 1 && !checkFirmware (cam -> MajorVersion, cam -> MinorVersion1, cam -> MinorVersion2, cam -> MinorVersion3 ) )
-				{
-					printf ( "This version of device doesn't supports auto exposure.\nSetting exposure to 15000\n" );
-					exposure_value = 15000;
-					returnValue = SetManualExposureValue_Stereo( exposure_value); // exposure time 15.6ms
-					if (true == returnValue)
-					{
-						printf ("setting exposure : SUCCESS\n");
-					}
-					else
-					{
-						printf ("setting exposure : FAIL\n");
-					}
-				}
-				else
-				{
-					if ( exposure_value < 10)
-					{
-						printf ( "Setting exposure to 15000\n");
-						exposure_value = 15000;
-						returnValue = SetManualExposureValue_Stereo( exposure_value); // exposure time 15.6ms
-						if (true == returnValue)
-						{
-							printf ("setting exposure : SUCCESS\n");
-						}
-						else
-						{
-							printf ("setting exposure : FAIL\n");
-						}
-					}
-				}
 			}
+			
 			std_msgs::Float64 exposure_msg;
 			exposure_msg.data=(float)exposure_value;
 			if ( GetManualExposureValue_Stereo( &exposure_value) == true )
@@ -181,7 +165,7 @@ exposure_value = 2;
 			IMU_pub = node.advertise<geometry_msgs::Point>("get_IMU", 1, true);
 			IMU_thread = boost::thread(boost::bind(&taraCamera::IMU_enable, this));
 		}
-
+	
 	void taraCamera::callBackExposure (std_msgs::Float64 call_exposure_msg)
 	{
 		DisableIMU();
@@ -936,21 +920,21 @@ exposure_value = 2;
 	
 	BOOL taraCamera::checkFirmware (UINT8 MajorVersion, UINT8 MinorVersion1, UINT16 MinorVersion2, UINT16 MinorVersion3)
 	{
-		if ( MajorVersion >= 1)
+		if ( MajorVersion >= MajorVersion_t)
 		{
-			if ( MinorVersion1 > 2)
+			if ( MinorVersion1 > MinorVersion1_t)
 			{
 				return 1;
 			}
 			else
 			{
-				if ( MinorVersion2 > 131 )
+				if ( MinorVersion2 > MinorVersion2_t )
 				{
 					return 1;
 				}
 				else
 				{
-					if ( MinorVersion3 > 652 )
+					if ( MinorVersion3 > MinorVersion3_t )
 					{
 						return 1;
 					}
