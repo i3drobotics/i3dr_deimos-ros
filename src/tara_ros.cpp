@@ -22,7 +22,7 @@ namespace uvc_camera {
 
 	taraCamera::taraCamera(ros::NodeHandle _comm_nh, ros::NodeHandle _param_nh) :
 		node(_comm_nh), pnode(_param_nh), it(_comm_nh),
-		info_mgr(_comm_nh, "camera"), info_mgr_left(_comm_nh, "cameraLeft"), info_mgr_right(_comm_nh, "cameraRight"), cam(0) {
+		info_mgr_left(_comm_nh, "cameraLeft"), info_mgr_right(_comm_nh, "cameraRight"), cam(0) {
 
 			/* default config values */
 			width = 640;
@@ -64,10 +64,8 @@ namespace uvc_camera {
 			exposure_pub = node.advertise<std_msgs::Float64>("get_exposure", 1, true);
 			brightness_pub = node.advertise<std_msgs::Float64>("get_brightness", 1, true);
 
-			std::string url;
 			std::string urlLeft;
 			std::string urlRight;
-			pnode.getParam("camera_info_url", url);
 			pnode.getParam("cameraLeft_info_url", urlLeft);
 			pnode.getParam("cameraRight_info_url", urlRight);
 
@@ -85,27 +83,20 @@ namespace uvc_camera {
 
 			/* set up information manager */
 
-			info_mgr.loadCameraInfo(url);
 			info_mgr_left.loadCameraInfo(urlLeft);
 			info_mgr_right.loadCameraInfo(urlRight);
 
-			info_pub = node.advertise<CameraInfo>("camera_info", 1);
 			info_pub_left = node.advertise<CameraInfo>("left//camera_info", 1);
 			info_pub_right = node.advertise<CameraInfo>("right//camera_info", 1);
 
 			returnValue = cam->set_control(V4L2_CID_BRIGHTNESS , 4); // brightness
-			if (true == returnValue)
-			{
-				printf ("setting brightness : SUCCESS\n");
-			}
-			else
+			if ( false == returnValue)
 			{
 				printf ("setting brightness : FAIL\n");
 			}
 
 			if( ( exposure_value > SEE3CAM_STEREO_EXPOSURE_MAX) || (exposure_value < SEE3CAM_STEREO_EXPOSURE_MIN) )
 			{
-				cout << "Exposure value is out of range" << endl;
 				if (checkFirmware (cam -> MajorVersion, cam -> MinorVersion1, cam -> MinorVersion2, cam -> MinorVersion3 ))
 				{
 					exposure_value = 1;
@@ -118,11 +109,7 @@ namespace uvc_camera {
 
 			returnValue = SetManualExposureValue_Stereo( exposure_value); // exposure time 15.6ms
 
-			if (true == returnValue)
-			{
-				printf ("setting exposure : SUCCESS\n");
-			}
-			else
+			if (false == returnValue)
 			{
 				printf ("setting exposure : FAIL\n");
 				
@@ -228,31 +215,7 @@ namespace uvc_camera {
 			cout <<"GetIMUValueBuffer_write failed" << endl;
 		}
 	}
-
-	void taraCamera::sendInfo(ImagePtr &image, ros::Time time) {
-		CameraInfoPtr info(new CameraInfo(info_mgr.getCameraInfo()));
-
-		/* Throw out any CamInfo that's not calibrated to this camera mode */
-		if (info->K[0] != 0.0 &&
-				(image->width != info->width
-				 || image->height != info->height)) {
-			info.reset(new CameraInfo());
-		}
-
-		/* If we don't have a calibration, set the image dimensions */
-		if (info->K[0] == 0.0) {
-			info->width = image->width;
-			info->height = image->height;
-		}
-
-		info->header.stamp = time;
-		info->header.frame_id = frame;
-		/*      
-			info -> binning_x = 2;
-			info -> binning_y = 2;
-		 */
-		info_pub.publish(info);
-	}
+	
 	void taraCamera::sendInfoRight(ImagePtr &image, ros::Time time) {
 		CameraInfoPtr info(new CameraInfo(info_mgr_right.getCameraInfo()));
 
@@ -364,7 +327,7 @@ namespace uvc_camera {
 					image->encoding = image_encodings::MONO8; 
 					memcpy(&image->data[0], img_frame, image->data.size());   
 					pub.publish(image);
-					sendInfo(image, capture_time);
+
 					/* concatenate frame  */             
 					image->height = height;
 					image->width = width * 2;
@@ -374,7 +337,6 @@ namespace uvc_camera {
 					image->encoding = image_encodings::MONO8;                        
 					memcpy(&image->data[0], concat_frame, image->data.size());
 					pub_concat.publish(image);
-					//		         sendInfo(image, capture_time);
 
 					//ROS_INFO_STREAM("capture time: " << capture_time);
 					++pair_id;
@@ -417,17 +379,11 @@ namespace uvc_camera {
 
 	BOOL taraCamera::LoadCameraMatrix()
 	{
-
-		printf ("in %s\n", __func__);
 		unsigned char *IntrinsicBuffer, *ExtrinsicBuffer;
 		int LengthIntrinsic, LengthExtrinsic;
 
 		//Read the data from the flash
-		if(StereoCalibRead(&IntrinsicBuffer, &ExtrinsicBuffer, &LengthIntrinsic, &LengthExtrinsic))
-		{
-			cout << "\nLoadCameraMatrix : Read Intrinsic and Extrinsic Files\n";
-		}
-		else
+		if(!StereoCalibRead(&IntrinsicBuffer, &ExtrinsicBuffer, &LengthIntrinsic, &LengthExtrinsic))
 		{
 			cout << "\nLoadCameraMatrix : Failed Reading Intrinsic and Extrinsic Files\n";
 			return FALSE;
@@ -498,7 +454,6 @@ namespace uvc_camera {
 		foutLeft << "image_width: 640\nimage_height: 480\ncamera_name: cameraLeft\ncamera_matrix:\n   rows: 3\n   cols: 3\n   data: [";
 		foutRight << "image_width: 640\nimage_height: 480\ncamera_name: cameraRight\ncamera_matrix:\n   rows: 3\n   cols: 3\n   data: [";   		
 
-		printf ("printing value\n");
 		int m1_found = 0;
 		int d1_found = 0;
 		int m2_found = 0;
@@ -848,16 +803,9 @@ namespace uvc_camera {
 
 	void taraCamera::IMU_enable()
 	{
-		cout << endl  << "		IMU Sample Application " << endl  << endl;
-		cout << " Application to illustrate the IMU unit LSM6DS0 integrated with Tara Camera" << endl;
-		cout << " Demonstrating the rotations of camera around x-axis and y-axis " << endl;
-		cout << " IMU values are limited from -90 to +90 degrees for illustration " << endl << endl;
-
 		SetIMUConfigDefaultEnable();
-
 		//Allocating buffers for output structure			
 		lIMUOutput = (IMUDATAOUTPUT_TypeDef*)malloc(1 * sizeof(IMUDATAOUTPUT_TypeDef));
-
 		//Memory validation
 		if(lIMUOutput == NULL)
 		{

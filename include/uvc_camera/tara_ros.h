@@ -9,8 +9,7 @@
 #include "camera_calibration_parsers/parse_yml.h"
 #include <fstream>
 #include <yaml-cpp/yaml.h>
-#include <string.h>
-#include <tf/transform_broadcaster.h>
+#include "geometry_msgs/Point.h"
 
 using namespace std;
 
@@ -38,14 +37,12 @@ namespace uvc_camera {
 
 			taraCamera(ros::NodeHandle comm_nh, ros::NodeHandle param_nh);
 			void onInit();
-			void sendInfo(sensor_msgs::ImagePtr &image, ros::Time time);
 			void sendInfoLeft(sensor_msgs::ImagePtr &image, ros::Time time);
 			void sendInfoRight(sensor_msgs::ImagePtr &image, ros::Time time);
 			void feedImages();
 			~taraCamera();
 			void timeCb(std_msgs::Time time);
 			BOOL LoadCameraMatrix();
-			
 			//IMU
 			void getInclination(double w_x, double w_y, double w_z, double a_x, double a_y, double a_z);
 			//     double GetIMUIntervalTime(IMUCONFIG_TypeDef	lIMUConfig);
@@ -64,7 +61,7 @@ namespace uvc_camera {
 			int  brightness_value;
 			bool rotate;
 
-			camera_info_manager::CameraInfoManager info_mgr;
+//			camera_info_manager::CameraInfoManager info_mgr;
 			camera_info_manager::CameraInfoManager info_mgr_left;
 			camera_info_manager::CameraInfoManager info_mgr_right;
 

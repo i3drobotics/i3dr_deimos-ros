@@ -52,7 +52,7 @@ enumerate_menu (int device_file_h_,
 
 	index = ( _device[10] ) - 48;
 
-	printf("opening %s\n", _device);
+//	printf("opening %s\n", _device);
 
 	if ((device_file_h_ = open(_device, O_RDWR)) == -1)
 	{
@@ -78,13 +78,14 @@ enumerate_menu (int device_file_h_,
 	format_desc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	int ret;
 
-	printf("## FORMATS: ##\n");
+//	printf("## FORMATS: ##\n");
 
 	while ((ret = ioctl(device_file_h_, VIDIOC_ENUM_FMT, &format_desc)) == 0)
 	{
+/*
 		printf("pixfmt %d = '%4s' desc = '%s'\n",
 				format_desc.index, (char *)&format_desc.pixelformat, format_desc.description);
-
+*/
 		format_desc.index++;
 
 		// enumerate frame sizes
@@ -96,8 +97,7 @@ enumerate_menu (int device_file_h_,
 			fsize.index++;
 			if (fsize.type == V4L2_FRMSIZE_TYPE_DISCRETE)
 			{
-				printf("  discrete: %ux%u:   ",
-						fsize.discrete.width, fsize.discrete.height);
+//				printf("  discrete: %ux%u:   ",fsize.discrete.width, fsize.discrete.height);
 
 				// enumerate frame rates
 				v4l2_frmivalenum fival;
@@ -105,18 +105,19 @@ enumerate_menu (int device_file_h_,
 				fival.pixel_format = format_desc.pixelformat;
 				fival.width = fsize.discrete.width;
 				fival.height = fsize.discrete.height;
+/*
 				while ((ret = ioctl(device_file_h_, VIDIOC_ENUM_FRAMEINTERVALS, &fival)) == 0)
 				{
 					fival.index++;
 					if (fival.type == V4L2_FRMIVAL_TYPE_DISCRETE)
 					{
-						printf("%u/%u ",
-								fival.discrete.numerator, fival.discrete.denominator);
+						printf("%u/%u ",fival.discrete.numerator, fival.discrete.denominator);
 					}
 					else
 						printf("I only handle discrete frame intervals...\n");
 				}
 				printf("\n");
+*/
 			}
 			else if (fsize.type == V4L2_FRMSIZE_TYPE_CONTINUOUS)
 			{
@@ -148,7 +149,7 @@ enumerate_menu (int device_file_h_,
 
 	memset (&queryctrl, 0, sizeof (queryctrl));
 
-	printf("## CONTROLS: ##\n");
+//	printf("## CONTROLS: ##\n");
 
 	for (queryctrl.id = V4L2_CID_BASE;
 			queryctrl.id < V4L2_CID_LASTP1;
@@ -157,7 +158,7 @@ enumerate_menu (int device_file_h_,
 			if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED)
 				continue;
 
-			printf ("Control '%s'\n", queryctrl.name);
+//			printf ("Control '%s'\n", queryctrl.name);
 
 			//if (queryctrl.type == V4L2_CTRL_TYPE_MENU)
 			//	enumerate_menu (device_file_h_,queryctrl,querymenu);
@@ -176,7 +177,7 @@ enumerate_menu (int device_file_h_,
 			if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED)
 				continue;
 
-			printf ("Control '%s'\n", queryctrl.name);
+//			printf ("Control '%s'\n", queryctrl.name);
 
 			//if (queryctrl.type == V4L2_CTRL_TYPE_MENU)
 			//enumerate_menu (device_file_h_,queryctrl,querymenu);
@@ -218,7 +219,7 @@ enumerate_menu (int device_file_h_,
 	//v4l2_queryctrl queryctrl;
 	memset(&queryctrl, 0, sizeof(queryctrl));
 
-	printf("## CONTROLS: ##\n");
+//	printf("## CONTROLS: ##\n");
 
 	uint32_t i = V4L2_CID_BASE;
 	while (i != V4L2_CID_LAST_EXTCTR)
@@ -236,10 +237,12 @@ enumerate_menu (int device_file_h_,
 				ctrl_type = "button";
 			else if (queryctrl.type == V4L2_CTRL_TYPE_MENU)
 				ctrl_type = "menu";
+/*
 			printf("  %s (%s, %d, id = %x): %d to %d (%d)\n",
 					ctrl_type,
 					queryctrl.name, queryctrl.flags, queryctrl.id,
 					queryctrl.minimum, queryctrl.maximum, queryctrl.step);
+*/	
 			if (queryctrl.type == V4L2_CTRL_TYPE_MENU)
 			{
 				v4l2_querymenu querymenu;
@@ -393,7 +396,7 @@ void Cam::showFirmwareVersion()
 {
 	if ( true == ReadFirmwareVersion( &MajorVersion, &MinorVersion1, &MinorVersion2, &MinorVersion3 ))
 	{
-		printf ("\n\thid_camera.cpp : firmwareversion of the camera is %d : %d : %d : %d\n", MajorVersion, MinorVersion1, MinorVersion2, MinorVersion3);
+		printf ("\nfirmwareversion of the camera is %d : %d : %d : %d\n", MajorVersion, MinorVersion1, MinorVersion2, MinorVersion3);
 	}
 	else
 	{
@@ -751,7 +754,7 @@ int Cam::set_control(uint32_t id, int val)
 		printf("current value of %s is %d\n", queryctrl.name, c.value);
 	}
 
-	printf("Setting control '%s' from %d to %d\n", queryctrl.name, c.value, val);
+//	printf("Setting control '%s' from %d to %d\n", queryctrl.name, c.value, val);
 
 	c.value = val;
 	if (xioctl(device_file_h_, VIDIOC_S_CTRL, &c) < 0)

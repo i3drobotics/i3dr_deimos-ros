@@ -121,7 +121,6 @@ BOOL InitExtensionUnit(char *busname)
 		return FALSE;
 	}
 
-	printf("count HID devices : %d\n", countHidDevices);
 	for(index=0; index < countHidDevices; index++)
 	{
 		//printf(" Selected HID Device : %s\n",hid_device_array[index]);
