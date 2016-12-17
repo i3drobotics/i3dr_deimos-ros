@@ -10,6 +10,7 @@
 #include <fstream>
 #include <yaml-cpp/yaml.h>
 #include "geometry_msgs/Point.h"
+#include "std_msgs/Bool.h"
 
 using namespace std;
 
@@ -34,6 +35,7 @@ namespace uvc_camera {
 			IMUCONFIG_TypeDef lIMUConfig;
 			IMUDATAINPUT_TypeDef lIMUInput;
 			IMUDATAOUTPUT_TypeDef *lIMUOutput;
+			bool isCameraStereo;
 
 			taraCamera(ros::NodeHandle comm_nh, ros::NodeHandle param_nh);
 			void onInit();
@@ -45,7 +47,6 @@ namespace uvc_camera {
 			BOOL LoadCameraMatrix();
 			//IMU
 			void getInclination(double w_x, double w_y, double w_z, double a_x, double a_y, double a_z);
-			//     double GetIMUIntervalTime(IMUCONFIG_TypeDef	lIMUConfig);
 			int returnValue;
 
 		private:
@@ -61,7 +62,6 @@ namespace uvc_camera {
 			int  brightness_value;
 			bool rotate;
 
-//			camera_info_manager::CameraInfoManager info_mgr;
 			camera_info_manager::CameraInfoManager info_mgr_left;
 			camera_info_manager::CameraInfoManager info_mgr_right;
 
@@ -86,7 +86,6 @@ namespace uvc_camera {
 
 			double angleX, angleY, angleZ; // Rotational angle for cube [NEW]
 			double RwEst[3];
-			//	double glIMU_Interval;
 
 			double squared(double x);
 			double glIMU_Interval;

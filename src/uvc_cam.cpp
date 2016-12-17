@@ -228,6 +228,7 @@ enumerate_menu (int device_file_h_,
 		if ((ret = ioctl(device_file_h_, VIDIOC_QUERYCTRL, &queryctrl)) == 0 &&
 				!(queryctrl.flags & V4L2_CTRL_FLAG_DISABLED))
 		{
+/*
 			const char *ctrl_type = NULL;
 			if (queryctrl.type == V4L2_CTRL_TYPE_INTEGER)
 				ctrl_type = "int";
@@ -237,12 +238,11 @@ enumerate_menu (int device_file_h_,
 				ctrl_type = "button";
 			else if (queryctrl.type == V4L2_CTRL_TYPE_MENU)
 				ctrl_type = "menu";
-/*
 			printf("  %s (%s, %d, id = %x): %d to %d (%d)\n",
 					ctrl_type,
 					queryctrl.name, queryctrl.flags, queryctrl.id,
 					queryctrl.minimum, queryctrl.maximum, queryctrl.step);
-*/	
+	
 			if (queryctrl.type == V4L2_CTRL_TYPE_MENU)
 			{
 				v4l2_querymenu querymenu;
@@ -255,7 +255,7 @@ enumerate_menu (int device_file_h_,
 					querymenu.index++;
 				}
 			}
-
+*/
 		}
 		else if (errno != EINVAL)
 			throw std::runtime_error("couldn't query control");

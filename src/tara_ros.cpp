@@ -39,6 +39,7 @@ namespace uvc_camera {
 			brightness_value = 4;
 			// for IMU
 			glIMU_Interval = 0.0f;
+			isCameraStereo = false;
 
 			angleX = 0.0f;
 			angleY = 0.0f;
@@ -71,87 +72,90 @@ namespace uvc_camera {
 
 			/* initialize the cameras */
 			cam = new uvc_cam::Cam(device.c_str(), uvc_cam::Cam::MODE_Y16, width, height, fps);
-
-			cam -> showFirmwareVersion();
-
-			unsigned char *in_buffer;
-			unsigned char *ex_buffer;
-			int intFileLength;
-			int extFileLength;
-			StereoCalibRead(&in_buffer, &ex_buffer, &intFileLength, &extFileLength);
-			LoadCameraMatrix();   
-
-			/* set up information manager */
-
-			info_mgr_left.loadCameraInfo(urlLeft);
-			info_mgr_right.loadCameraInfo(urlRight);
-
-			info_pub_left = node.advertise<CameraInfo>("left//camera_info", 1);
-			info_pub_right = node.advertise<CameraInfo>("right//camera_info", 1);
-
-			returnValue = cam->set_control(V4L2_CID_BRIGHTNESS , 4); // brightness
-			if ( false == returnValue)
+			
+			if (cam -> IsStereo == true )
 			{
-				printf ("setting brightness : FAIL\n");
-			}
+				isCameraStereo = true;
+				cam -> showFirmwareVersion();
+				unsigned char *in_buffer;
+				unsigned char *ex_buffer;
+				int intFileLength;
+				int extFileLength;
+				StereoCalibRead(&in_buffer, &ex_buffer, &intFileLength, &extFileLength);
+				LoadCameraMatrix();   
 
-			if( ( exposure_value > SEE3CAM_STEREO_EXPOSURE_MAX) || (exposure_value < SEE3CAM_STEREO_EXPOSURE_MIN) )
-			{
-				if (checkFirmware (cam -> MajorVersion, cam -> MinorVersion1, cam -> MinorVersion2, cam -> MinorVersion3 ))
+				/* set up information manager */
+
+				info_mgr_left.loadCameraInfo(urlLeft);
+				info_mgr_right.loadCameraInfo(urlRight);
+
+				info_pub_left = node.advertise<CameraInfo>("left//camera_info", 1);
+				info_pub_right = node.advertise<CameraInfo>("right//camera_info", 1);
+
+				returnValue = cam->set_control(V4L2_CID_BRIGHTNESS , 4); // brightness
+				if ( false == returnValue)
 				{
-					exposure_value = 1;
+					printf ("setting brightness : FAIL\n");
+				}
+
+				if( ( exposure_value > SEE3CAM_STEREO_EXPOSURE_MAX) || (exposure_value < SEE3CAM_STEREO_EXPOSURE_MIN) )
+				{
+					if (checkFirmware (cam -> MajorVersion, cam -> MinorVersion1, cam -> MinorVersion2, cam -> MinorVersion3 ))
+					{
+						exposure_value = 1;
+					}
+					else
+					{
+						exposure_value = 15000;
+					}
+				}
+
+				returnValue = SetManualExposureValue_Stereo( exposure_value); // exposure time 15.6ms
+
+				if (false == returnValue)
+				{
+					printf ("setting exposure : FAIL\n");
+				
+				}
+			
+				std_msgs::Float64 exposure_msg;
+				exposure_msg.data=(float)exposure_value;
+				if ( GetManualExposureValue_Stereo( &exposure_value) == true )
+				{
+					exposure_msg.data = (float) exposure_value;
 				}
 				else
 				{
-					exposure_value = 15000;
+					printf ("Error while getting exposure\n");
 				}
+				exposure_pub.publish( exposure_msg );
+
+				std_msgs::Float64 brightness_msg;
+				brightness_msg.data=(float)brightness_value;
+				if ( cam -> get_control ( V4L2_CID_BRIGHTNESS, &brightness_value ) == true)
+				{
+					brightness_msg.data = brightness_value;
+				}
+				else
+				{
+					printf ("Error while getting brightness\n");
+				}
+				brightness_pub.publish( brightness_msg );
+
+				/* and turn on the streamer */
+				ok = true;
+				image_thread = boost::thread(boost::bind(&taraCamera::feedImages, this));
+
+				std::string time_topic;
+				pnode.getParam("time_topic", time_topic);
+				time_sub = node.subscribe("time_topic", 1, &taraCamera::timeCb, this );
+
+				exposure_sub = node.subscribe ("set_exposure", 1, &taraCamera::callBackExposure, this);
+				brightness_sub = node.subscribe ("set_brightness", 1, &taraCamera::callBackBrightness, this);
+
+				IMU_pub = node.advertise<geometry_msgs::Point>("get_IMU", 1, true);
+				IMU_thread = boost::thread(boost::bind(&taraCamera::IMU_enable, this));
 			}
-
-			returnValue = SetManualExposureValue_Stereo( exposure_value); // exposure time 15.6ms
-
-			if (false == returnValue)
-			{
-				printf ("setting exposure : FAIL\n");
-				
-			}
-			
-			std_msgs::Float64 exposure_msg;
-			exposure_msg.data=(float)exposure_value;
-			if ( GetManualExposureValue_Stereo( &exposure_value) == true )
-			{
-				exposure_msg.data = (float) exposure_value;
-			}
-			else
-			{
-				printf ("Error while getting exposure\n");
-			}
-			exposure_pub.publish( exposure_msg );
-
-			std_msgs::Float64 brightness_msg;
-			brightness_msg.data=(float)brightness_value;
-			if ( cam -> get_control ( V4L2_CID_BRIGHTNESS, &brightness_value ) == true)
-			{
-				brightness_msg.data = brightness_value;
-			}
-			else
-			{
-				printf ("Error while getting brightness\n");
-			}
-			brightness_pub.publish( brightness_msg );
-
-			/* and turn on the streamer */
-			ok = true;
-			image_thread = boost::thread(boost::bind(&taraCamera::feedImages, this));
-
-			std::string time_topic;
-			pnode.getParam("time_topic", time_topic);
-			time_sub = node.subscribe("time_topic", 1, &taraCamera::timeCb, this );
-
-			exposure_sub = node.subscribe ("set_exposure", 1, &taraCamera::callBackExposure, this);
-			brightness_sub = node.subscribe ("set_brightness", 1, &taraCamera::callBackBrightness, this);
-
-			IMU_pub = node.advertise<geometry_msgs::Point>("get_IMU", 1, true);
-			IMU_thread = boost::thread(boost::bind(&taraCamera::IMU_enable, this));
 		}
 	
 	void taraCamera::callBackExposure (std_msgs::Float64 call_exposure_msg)
@@ -352,14 +356,16 @@ namespace uvc_camera {
 	}
 
 	taraCamera::~taraCamera() {
-		ok = false;
-		image_thread.join();
-		DisableIMU();
+		if ( isCameraStereo == true )
+		{
+			ok = false;
+			image_thread.join();
+			DisableIMU();
 
-		//Freeing the memory
-		free(lIMUOutput);
-
-		IMU_thread.join();
+			//Freeing the memory
+			free(lIMUOutput);
+			IMU_thread.join();
+		}
 		if (cam) delete cam;
 	}
 
