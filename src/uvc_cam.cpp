@@ -559,12 +559,12 @@ int Cam::grabStereo(unsigned char **frame, uint32_t &bytes_used, unsigned char *
     	if (i % 2 == 0)
     	{	
     		concat_frame_ [ (i/(2*width_)) * width_ + (i / 2) ] = py16 [i];
-    		right_frame_ [i / 2 ] = py16 [i];
+    		left_frame_ [i / 2 ] = py16 [i];
     	}
     	else
     	{
     		concat_frame_ [ (i/(2*width_)) * width_ + (i / 2) + width_ ] = py16 [i];
-    		left_frame_ [ i / 2 ] = py16 [i];
+    		right_frame_ [ i / 2 ] = py16 [i];
     	}
       }
       
