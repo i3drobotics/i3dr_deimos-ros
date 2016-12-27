@@ -101,10 +101,13 @@ public:
   bool set_auto_white_balance(bool on);
   void set_motion_thresholds(int lum, int count);
   int set_control(uint32_t id, int val);
-  int get_control(uint32_t id);
+  int get_control(uint32_t id, int *value);
   int GetListofDeviceseCon(void);
   void showFirmwareVersion();
   BOOL IsStereoDeviceAvail(char *pid);
+  
+  
+  
 private:
 //***************************************
 

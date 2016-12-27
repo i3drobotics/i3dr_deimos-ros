@@ -161,7 +161,9 @@ BOOL SetIMUConfig(IMUCONFIG_TypeDef lIMUConfig);					//Sets the IMU configuratio
 
 BOOL ControlIMUCapture(IMUDATAINPUT_TypeDef *lIMUInput);			//Configures the IMU to read the IMU data in a specific format
 
-BOOL GetIMUValueBuffer(pthread_mutex_t *lIMUDataReadyEvent, IMUDATAOUTPUT_TypeDef *lIMUAxes);	//Reads the IMU values
+BOOL GetIMUValueBuffer(IMUDATAOUTPUT_TypeDef *lIMUAxes);	//Reads the IMU values
+
+BOOL GetIMUValueBuffer_write();									//Command to read IMU value
 
 BOOL StereoCalibRead(unsigned char **IntrinsicBuffer, unsigned char **ExtrinsicBuffer, int *lIntFileLength, int *lExtFileLength);										 //Reads back the Intrinsic and Extrinsic values of the camera from the flash
 
