@@ -554,30 +554,30 @@ int Cam::grabStereo(unsigned char **frame, uint32_t &bytes_used, unsigned char *
 
 	if (mode_ == MODE_Y16)
 	{
-
-		unsigned char *py16 = (unsigned char *)buffer_mem_[buffer_.index];
-		//   	 unsigned int var_ = 0;
-		for (unsigned int i = 0; i < width_ * height_ * 2; i ++)
-		{ 
-			if (i % 2 == 0)
-			{	
-				concat_frame_ [ (i/(2*width_)) * width_ + (i / 2) ] = py16 [i];
-				right_frame_ [i / 2 ] = py16 [i];
-			}
-			else
-			{
-				concat_frame_ [ (i/(2*width_)) * width_ + (i / 2) + width_ ] = py16 [i];
-				left_frame_ [ i / 2 ] = py16 [i];
-			}
-		}
-
-		(*concat_frame) = concat_frame_;
-		(*frame) = py16;
-		(*right_frame) = right_frame_;
-		(*left_frame) = left_frame_;
-
+	   		
+   	  unsigned char *py16 = (unsigned char *)buffer_mem_[buffer_.index];
+//   	 unsigned int var_ = 0;
+  	  for (unsigned int i = 0; i < width_ * height_ * 2; i ++)
+      { 
+    	if (i % 2 == 0)
+    	{	
+    		concat_frame_ [ (i/(2*width_)) * width_ + (i / 2) ] = py16 [i];
+    		left_frame_ [i / 2 ] = py16 [i];
+    	}
+    	else
+    	{
+    		concat_frame_ [ (i/(2*width_)) * width_ + (i / 2) + width_ ] = py16 [i];
+    		right_frame_ [ i / 2 ] = py16 [i];
+    	}
+      }
+      
+      (*concat_frame) = concat_frame_;
+      (*frame) = py16;
+      (*right_frame) = right_frame_;
+      (*left_frame) = left_frame_;
+      
 	}
-	return buffer_.index;
+  return buffer_.index;
 }
 
 
