@@ -934,8 +934,10 @@ namespace uvc_camera {
 		IMUValue.angular_velocity.y = gy;
 		IMUValue.angular_velocity.z = gz;
 		
-		
-
+		// Orientation calculation implemented according to Madgwick
+		// Refer : http://x-io.co.uk/res/doc/madgwick_internal_report.pdf
+		// Accuracy - Unknown
+#if 0
 		// Rate of change of quaternion from gyroscope
 		qDot1 = 0.5f * (-q1 * gx - q2 * gy - q3 * gz);
 		qDot2 = 0.5f * (q0 * gx + q2 * gz - q3 * gy);
@@ -1001,7 +1003,7 @@ namespace uvc_camera {
 		IMUValue.orientation.x = q1;
 		IMUValue.orientation.y = q2;
 		IMUValue.orientation.z = q3;
-		
+#endif		
 		IMU_pub.publish(IMUValue);		
 	}
 

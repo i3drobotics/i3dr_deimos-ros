@@ -69,10 +69,16 @@ e.g. :
 rostopic pub -1 /stereo/set_brightness std_msgs/Float64 "data: 6"
 ```
 
-* To read the X,Y,Z co-ordinates of the camera using the built-in IMU:
+* To read the inclination of the camera using the built-in IMU:
 
 ```bash
-rostopic echo /stereo/get_IMU 
+rostopic echo /stereo/get_inclination
+```
+
+* To read the angular velocity and the linear acceleration of the camera using IMU:
+
+```bash
+rostopic echo /stereo/get_IMU
 ```
 
 Known Issues
