@@ -75,7 +75,7 @@ rostopic pub -1 /stereo/set_brightness std_msgs/Float64 "data: 6"
 rostopic echo /stereo/get_inclination
 ```
 
-* To read the angular velocity and the linear acceleration of the camera using IMU:
+* To read the angular velocity and linear acceleration of the camera using IMU:
 
 ```bash
 rostopic echo /stereo/get_IMU
