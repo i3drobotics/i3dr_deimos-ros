@@ -11,6 +11,7 @@
 #include <yaml-cpp/yaml.h>
 #include "geometry_msgs/Point.h"
 #include "std_msgs/Bool.h"
+#include "sensor_msgs/Imu.h"
 
 using namespace std;
 
@@ -24,6 +25,10 @@ using namespace std;
 #define 		MinorVersion1_t	2
 #define 		MinorVersion2_t	131
 #define 		MinorVersion3_t	652
+
+#define sampleFreq     119.0f                                   // sample frequency in Hz
+#define gyroMeasError  0.1                                      // gyroscope measurement error in rad/s
+#define betaDef        sqrt(3.0f / 4.0f) * gyroMeasError        // compute beta
 
 namespace uvc_camera {
 
@@ -47,6 +52,8 @@ namespace uvc_camera {
 			BOOL LoadCameraMatrix();
 			//IMU
 			void getInclination(double w_x, double w_y, double w_z, double a_x, double a_y, double a_z);
+			// getOrientation return the orientation in quaternion format
+			void getOrientation(double w_x, double w_y, double w_z, double a_x, double a_y, double a_z);
 			int returnValue;
 
 		private:
@@ -71,6 +78,7 @@ namespace uvc_camera {
 			ros::Publisher info_pub_right;    
 			ros::Publisher exposure_pub;
 			ros::Publisher brightness_pub;
+			ros::Publisher IMU_inclination_pub;
 			ros::Publisher IMU_pub;
 
 			ros::Subscriber time_sub;
@@ -83,6 +91,8 @@ namespace uvc_camera {
 			uvc_cam::Cam *cam;
 			boost::thread image_thread;
 			boost::thread IMU_thread;
+			volatile float beta;	// 2 * proportional gain (Kp)
+			volatile float q0, q1, q2, q3;	// quaternion of sensor frame relative to auxiliary frame
 
 			double angleX, angleY, angleZ; // Rotational angle for cube [NEW]
 			double RwEst[3];
@@ -99,6 +109,7 @@ namespace uvc_camera {
 			double GetIMUIntervalTime(IMUCONFIG_TypeDef	lIMUConfig);
 			BOOL DisableIMU();
 			BOOL checkFirmware (UINT8 MajorVersion, UINT8 MinorVersion1, UINT16 MinorVersion2, UINT16 MinorVersion3);		//Returns 1 if firmware supports auto exposure, else 0;
+			float invSqrt(float x);
 
 	};
 
