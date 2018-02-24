@@ -32,6 +32,7 @@ namespace uvc_camera {
 			frames_to_skip = 0;
 			device = "/dev/video0";
 			frame = "camera";
+			frameIMU = "imu_link";
 			frameLeft = "cameraLeft";
 			frameRight = "cameraRight";
 			rotate = false;
@@ -52,6 +53,8 @@ namespace uvc_camera {
 			pnode.getParam("width", width);
 			pnode.getParam("height", height);
 			pnode.getParam("frame_id", frame);
+			pnode.getParam("frame_left", frameLeft);
+			pnode.getParam("frame_right", frameRight);
 
 			// changing start
 			pnode.getParam ("exposureValue", exposure_value);
@@ -1004,6 +1007,7 @@ namespace uvc_camera {
 		IMUValue.orientation.y = q2;
 		IMUValue.orientation.z = q3;
 #endif		
+		IMUValue.header.frame_id = frameIMU;
 		IMU_pub.publish(IMUValue);		
 	}
 

@@ -65,6 +65,7 @@ namespace uvc_camera {
 			std::string device, frame;
 			std::string frameLeft;
 			std::string frameRight;
+			std::string frameIMU;
 			int  exposure_value;
 			int  brightness_value;
 			bool rotate;
