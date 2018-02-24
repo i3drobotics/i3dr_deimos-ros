@@ -238,7 +238,7 @@ namespace uvc_camera {
 		}
 
 		info->header.stamp = time;
-		info->header.frame_id = frameRight;
+		info->header.frame_id = frameLeft;
 
 		info_pub_right.publish(info);
 	}
