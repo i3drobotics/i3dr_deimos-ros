@@ -1,10 +1,12 @@
-see3cam
+Deimos
 =======
 
-ROS driver for the e-consystems See3CAM_Stereo (Tara) camera based on the 
-[uvc_camera](https://github.com/ktossell/camera_umd/tree/master/uvc_camera) package.
+ROS driver for i3D Robotics' Deimos stereo camera, derived from the e-consystems See3CAM_Stereo (Tara) camera driver. This driver is in turn based on the [uvc_camera](https://github.com/ktossell/camera_umd/tree/master/uvc_camera) package.
 
-Creates a stereo image node pair (`left/image_raw` and `right/image_raw`) from any connected Tara devices. This is for compatibility with any other ROS modules which support stereo cameras.
+Creates a stereo image node pair (`left/image_raw` and `right/image_raw`) from any connected Deimos/See3Cam device. This is for compatibility with any other ROS modules which support stereo cameras. This driver has been modified to respect ROS image pipeline conventions and to ease use of the IMU.
+
+As per convention, both left and right images are published in the left camera frame. IMU data are published in the `imu_link` frame. This package will be shortly updated to include an xacro file for the Deimos stereo camera.
+
 Added support for setting and getting exposure and brightness.
 Added support for getting IMU data.
 
