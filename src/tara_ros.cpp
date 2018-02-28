@@ -37,8 +37,8 @@ namespace uvc_camera {
 			frameCameraInfoLeft = "cameraLeft_optical";
 			frameCameraInfoRight = "cameraLeft_optical";
 			rotate = false;
-			exposure_value = 1;
-			brightness_value = 4;
+			exposure_value = 0;
+			brightness_value = 0;
 			// for IMU
 			glIMU_Interval = 0.0f;
 			isCameraStereo = false;
@@ -155,7 +155,7 @@ namespace uvc_camera {
 				exposure_sub = node.subscribe ("set_exposure", 1, &taraCamera::callBackExposure, this);
 				brightness_sub = node.subscribe ("set_brightness", 1, &taraCamera::callBackBrightness, this);
 
-				IMU_pub = node.advertise<sensor_msgs::Imu>("get_IMU", 1, true);
+				IMU_pub = node.advertise<sensor_msgs::Imu>("imu_data", 1, true);
 				IMU_inclination_pub = node.advertise<geometry_msgs::Point>("get_inclination", 1, true);
 				IMU_thread = boost::thread(boost::bind(&taraCamera::IMU_enable, this));
 			}
