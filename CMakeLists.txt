@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(uvc_camera)
+project(deimos)
 
 find_package(catkin REQUIRED COMPONENTS camera_info_manager image_transport nodelet roscpp sensor_msgs)
 
@@ -45,7 +45,7 @@ catkin_package(
 include_directories(
 	include
 	${catkin_INCLUDE_DIRS}
-	${CMAKE_SOURCE_DIR}/../src/see3cam/src/xunit
+	${CMAKE_CURRENT_SOURCE_DIR}/src/xunit
 	${GLIB_INCLUDE_DIRS}
 )
 
