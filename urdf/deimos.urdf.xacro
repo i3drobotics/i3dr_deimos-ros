@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<!--
+Copyright (c) 2018, I3D Robotics Ltd.
+-->
+
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <xacro:property name="M_PI" value="3.14159"/>
+
+    <xacro:macro name="deimos_camera">
+
+    <link name="cameraLeft_optical" />
+    <link name="cameraRight_optical" />
+    <link name="cameraLeft" />
+    <link name="cameraRight" />
+
+    <link name="deimos_center">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.0324 0.101 0.038"/>
+                <!--mesh filename="package://deimos-ros/urdf/deimos.stl" /-->
+            </geometry>
+        </visual>
+    </link>
+
+    <link name="deimos_depth_camera" />
+    <link name="imu_link"/>
+ 
+    <!-- Deimos has a 60 mm baseline -->
+    <joint name="deimos_left_camera_joint" type="fixed">
+        <parent link="deimos_center"/>
+        <child link="cameraLeft"/>
+        <origin xyz="0 0.03 0" rpy="0 0 0" />
+    </joint>
+
+    <joint name="deimos_right_camera_joint" type="fixed">
+        <parent link="deimos_center"/>
+        <child link="cameraRight"/>
+        <origin xyz="0 -0.03 0" rpy="0 0 0" />
+    </joint>
+
+    <joint name="deimos_left_optical_joint" type="fixed">
+        <parent link="cameraLeft"/>
+        <child link="cameraLeft_optical"/>
+	<!-- Correct for the optical frame orientation -->
+        <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}" />
+    </joint>
+
+    <joint name="deimos_right_optical_joint" type="fixed">
+        <parent link="cameraRight"/>
+        <child link="cameraRight_optical"/>
+	<!-- Correct for the optical frame orientation -->
+        <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}" />
+    </joint>
+
+    <joint name="deimos_depth_camera_joint" type="fixed">
+        <parent link="cameraLeft"/>
+        <child link="deimos_depth_camera"/>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+
+    <!-- Correct for IMU orientation, Z -> X -->
+    <joint name="imu_joint" type="fixed">
+    	<origin xyz="0 0 0" rpy="0 ${M_PI/2} 0" />
+    	<parent link="deimos_center" />
+    	<child link="imu_link" />
+    </joint>
+
+    
+
+    </xacro:macro>
+
+</robot>
