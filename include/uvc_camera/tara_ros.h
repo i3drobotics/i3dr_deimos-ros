@@ -63,8 +63,10 @@ namespace uvc_camera {
 
 			int width, height, fps, skip_frames, frames_to_skip;
 			std::string device, frame;
-			std::string frameLeft;
-			std::string frameRight;
+			std::string frameImageLeft;
+			std::string frameImageRight;
+			std::string frameCameraInfoLeft;
+			std::string frameCameraInfoRight;
 			std::string frameIMU;
 			int  exposure_value;
 			int  brightness_value;

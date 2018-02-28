@@ -21,20 +21,21 @@ namespace uvc_camera {
 
 
 	taraCamera::taraCamera(ros::NodeHandle _comm_nh, ros::NodeHandle _param_nh) :
-		node(_comm_nh), pnode(_param_nh), it(_comm_nh),
-		info_mgr_left(_comm_nh, "cameraLeft"), info_mgr_right(_comm_nh, "cameraRight"), cam(0) {
+		node(_comm_nh), pnode(_param_nh), it(_comm_nh), info_mgr_left(_comm_nh, "cameraLeft"), info_mgr_right(_comm_nh, "cameraRight"), cam(0) {
 
 			/* default config values */
-			width = 640;
+			width = 752;
 			height = 480;
-			fps = 10;
+			fps = 60;
 			skip_frames = 0;
 			frames_to_skip = 0;
 			device = "/dev/video0";
 			frame = "camera";
 			frameIMU = "imu_link";
-			frameLeft = "cameraLeft";
-			frameRight = "cameraRight";
+			frameImageLeft = "/left/image_raw";
+			frameImageRight = "/right/image_raw";
+			frameCameraInfoLeft = "cameraLeft_optical";
+			frameCameraInfoRight = "cameraLeft_optical";
 			rotate = false;
 			exposure_value = 1;
 			brightness_value = 4;
@@ -53,8 +54,6 @@ namespace uvc_camera {
 			pnode.getParam("width", width);
 			pnode.getParam("height", height);
 			pnode.getParam("frame_id", frame);
-			pnode.getParam("frame_left", frameLeft);
-			pnode.getParam("frame_right", frameRight);
 
 			// changing start
 			pnode.getParam ("exposureValue", exposure_value);
@@ -241,7 +240,10 @@ namespace uvc_camera {
 		}
 
 		info->header.stamp = time;
-		info->header.frame_id = frameLeft;
+		
+		/* Important: this is where we derive the tf from *not* the image header */
+		
+		info->header.frame_id = frameCameraInfoRight;
 
 		info_pub_right.publish(info);
 	}
@@ -262,7 +264,9 @@ namespace uvc_camera {
 		}
 
 		info->header.stamp = time;
-		info->header.frame_id = frameLeft;
+		/* Important: this is where we derive the tf from *not* the image header */
+
+		info->header.frame_id = frameCameraInfoLeft;
 
 		//      info -> binning_x = 2;
 		//      info -> binning_y = 2;
@@ -310,12 +314,12 @@ namespace uvc_camera {
 
 					/* left and right frame  */             
 					image->encoding = image_encodings::MONO8;                        
-					image->header.frame_id = frameRight;
+					image->header.frame_id = frameImageRight;
 					memcpy(&image->data[0], right_frame, image->data.size());
 					pub_right.publish(image);
 					sendInfoRight(image, capture_time);           
 
-					image->header.frame_id = frameLeft;
+					image->header.frame_id = frameImageLeft;
 					memcpy(&image->data[0], left_frame, image->data.size());
 					pub_left.publish(image);
 					sendInfoLeft(image, capture_time);
