@@ -58,7 +58,7 @@ The root frame is `deimos_left_mount` which is the location of the centre M4 mou
 
 The full tree for a standalone Deimos system is shown below:
 
-![Deimos TF tree](https://github.com/i3drobotics/deimos-ros/doc/deimos_tf_tree.PNG)
+![Deimos TF tree](doc/deimos_tf_tree.PNG)
 
 Calibration
 ===========

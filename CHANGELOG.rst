@@ -14,3 +14,5 @@ Changelog for package uvc_camera
 * Some typos/spelling in logging functions
 * Deleted unnecessary old UVC camera code
 * Updated readme with some more info
+* Add V4l2 to package.xml
+* 
