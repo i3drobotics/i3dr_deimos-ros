@@ -19,24 +19,40 @@ Copyright (c) 2018, I3D Robotics Ltd.
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
                 <box size="0.0324 0.101 0.038"/>
-                <!--mesh filename="package://deimos-ros/urdf/deimos.stl" /-->
+                <!--mesh filename="package://deimos/urdf/deimos.stl" /-->
             </geometry>
         </visual>
     </link>
 
     <link name="deimos_depth_camera" />
     <link name="imu_link"/>
+
+    <!-- M4 trisert location -->
+    <link name="deimos_left_mount" />
+    <link name="deimos_right_mount" />
  
     <!-- Deimos has a 60 mm baseline -->
-    <joint name="deimos_left_camera_joint" type="fixed">
-        <parent link="deimos_center"/>
-        <child link="cameraLeft"/>
+    <joint name="deimos_left_mount_joint" type="fixed">
+        <parent link="deimos_left_mount"/>
+        <child link="deimos_center"/>
+        <origin xyz="-0.13241 -${-0.017875+0.03} 0.025" rpy="0 0 0" />
+    </joint>
+
+    <joint name="deimos_right_mount_joint" type="fixed">
+        <parent link="deimos_left_mount"/>
+        <child link="deimos_right_mount"/>
         <origin xyz="0 0.03 0" rpy="0 0 0" />
     </joint>
 
     <joint name="deimos_right_camera_joint" type="fixed">
         <parent link="deimos_center"/>
         <child link="cameraRight"/>
+        <origin xyz="0 0.03 0" rpy="0 0 0" />
+    </joint>
+
+    <joint name="deimos_left_camera_joint" type="fixed">
+        <parent link="deimos_center"/>
+        <child link="cameraLeft"/>
         <origin xyz="0 -0.03 0" rpy="0 0 0" />
     </joint>
 
@@ -62,13 +78,10 @@ Copyright (c) 2018, I3D Robotics Ltd.
 
     <!-- Correct for IMU orientation, Z -> X -->
     <joint name="imu_joint" type="fixed">
-    	<origin xyz="0 0 0" rpy="0 ${M_PI/2} 0" />
+    	<origin xyz="0 0.015 -0.002" rpy="0 ${M_PI/2} 0" />
     	<parent link="deimos_center" />
     	<child link="imu_link" />
     </joint>
-
-    
-
     </xacro:macro>
 
 </robot>

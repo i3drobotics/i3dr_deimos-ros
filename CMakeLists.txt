@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
+set (CMAKE_CXX_STANDARD 11)
 project(deimos)
 
 find_package(catkin REQUIRED COMPONENTS camera_info_manager image_transport nodelet roscpp sensor_msgs)
@@ -37,7 +38,6 @@ SET(GLIB_INCLUDE_DIRS ${GLIB_INCLUDE_DIR} ${GLIBCONFIG_INCLUDE_DIR})
 
 catkin_package(
 	INCLUDE_DIRS include
-	LIBRARIES nodelet_uvc_camera
 	CATKIN_DEPENDS roscpp nodelet sensor_msgs
 #  DEPENDS system_lib
 )
@@ -62,17 +62,8 @@ add_library(xunitTara
 target_link_libraries(xunitTara ${udev_LIBRARIES} ${GLIB2_LIBRARIES})  
 target_link_libraries(xunit ${udev_LIBRARIES})
 
-add_library(nodelet_uvc_camera src/nodelets.cpp src/camera.cpp src/stereo.cpp src/uvc_cam.cpp)
-target_link_libraries(nodelet_uvc_camera ${Boost_LIBRARIES} ${catkin_LIBRARIES} xunit)
-
-add_executable(uvc_camera_node src/camera_node.cpp src/camera.cpp src/uvc_cam.cpp)
-target_link_libraries(uvc_camera_node ${Boost_LIBRARIES} ${catkin_LIBRARIES} xunit xunitTara -lv4l2 -ludev -lglib-2.0)
-
-add_executable(uvc_stereo_node src/stereo_node.cpp src/stereo.cpp src/uvc_cam.cpp)
-target_link_libraries(uvc_stereo_node ${Boost_LIBRARIES} ${catkin_LIBRARIES} xunit xunitTara -lv4l2 -ludev -lglib-2.0)
-
-add_executable(tara_node src/tara_node.cpp src/tara_ros.cpp src/uvc_cam.cpp)
-target_link_libraries(tara_node ${Boost_LIBRARIES} ${catkin_LIBRARIES} xunitTara ${GLIB2_LIBRARIES} -lv4l2 -lyaml-cpp -ludev -lglib-2.0)
+add_executable(deimos_node src/deimos_node.cpp src/deimos_ros.cpp src/uvc_cam.cpp)
+target_link_libraries(deimos_node ${Boost_LIBRARIES} ${catkin_LIBRARIES} xunitTara ${GLIB2_LIBRARIES} -lv4l2 -lyaml-cpp -ludev -lglib-2.0)
 
 #############
 ## Install ##
@@ -88,22 +79,10 @@ target_link_libraries(tara_node ${Boost_LIBRARIES} ${catkin_LIBRARIES} xunitTara
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 
-## Mark executables and/or libraries for installation
-install(TARGETS nodelet_uvc_camera uvc_camera_node uvc_stereo_node
-	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(TARGETS tara_node
+install(TARGETS deimos_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(FILES
-  nodelet_uvc_camera.xml
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
 ## Mark cpp header files for installation

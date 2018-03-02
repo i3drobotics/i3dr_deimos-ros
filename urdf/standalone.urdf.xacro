@@ -10,7 +10,7 @@
   <joint name="camera_link" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 0" />
     <parent link="base_link" />
-    <child link="deimos_center" />
+    <child link="deimos_left_mount" />
   </joint>
 
 </robot>

@@ -11,7 +11,7 @@
 #include "image_transport/image_transport.h"
 #include "std_msgs/Float64.h"
 
-#include "uvc_camera/tara_ros.h"
+#include "uvc_camera/deimos_ros.h"
 
 using namespace sensor_msgs;
 
@@ -20,8 +20,8 @@ namespace uvc_camera {
 	IMUDATAINPUT_TypeDef lIMUInput;
 
 
-	taraCamera::taraCamera(ros::NodeHandle _comm_nh, ros::NodeHandle _param_nh) :
-		node(_comm_nh), pnode(_param_nh), it(_comm_nh), info_mgr_left(_comm_nh, "cameraLeft"), info_mgr_right(_comm_nh, "cameraRight"), cam(0) {
+	deimosCamera::deimosCamera(ros::NodeHandle _comm_nh, ros::NodeHandle _param_nh) :
+		node(_comm_nh), pnode(_param_nh), it(_comm_nh), cam(0) {
 
 			/* default config values */
 			width = 752;
@@ -69,8 +69,21 @@ namespace uvc_camera {
 
 			std::string urlLeft;
 			std::string urlRight;
+			std::string leftCameraName="cameraLeft";
+			std::string rightCameraName="cameraRight";
+
+			std::string ns = ros::this_node::getNamespace();
+
+			auto node_left = ros::NodeHandle(ns+"/left");
+			auto node_right = ros::NodeHandle(ns+"/right");
+
 			pnode.getParam("cameraLeft_info_url", urlLeft);
 			pnode.getParam("cameraRight_info_url", urlRight);
+			pnode.getParam("leftCameraName", leftCameraName);
+			pnode.getParam("rightCameraName", leftCameraName);
+
+			info_mgr_left = new camera_info_manager::CameraInfoManager(node_left, leftCameraName, urlLeft);
+			info_mgr_right = new camera_info_manager::CameraInfoManager(node_right, rightCameraName, urlRight);
 
 			/* initialize the cameras */
 			cam = new uvc_cam::Cam(device.c_str(), uvc_cam::Cam::MODE_Y16, width, height, fps);
@@ -84,12 +97,11 @@ namespace uvc_camera {
 				int intFileLength;
 				int extFileLength;
 				StereoCalibRead(&in_buffer, &ex_buffer, &intFileLength, &extFileLength);
-				LoadCameraMatrix();   
 
 				/* set up information manager */
 
-				info_mgr_left.loadCameraInfo(urlLeft);
-				info_mgr_right.loadCameraInfo(urlRight);
+				info_mgr_left->loadCameraInfo(urlLeft);
+				info_mgr_right->loadCameraInfo(urlRight);
 
 				info_pub_left = node.advertise<CameraInfo>("left//camera_info", 1);
 				info_pub_right = node.advertise<CameraInfo>("right//camera_info", 1);
@@ -113,7 +125,7 @@ namespace uvc_camera {
 				}
 
 				returnValue = SetManualExposureValue_Stereo( exposure_value); // exposure time 15.6ms
-
+				
 				if (false == returnValue)
 				{
 					printf ("setting exposure : FAIL\n");
@@ -146,22 +158,22 @@ namespace uvc_camera {
 
 				/* and turn on the streamer */
 				ok = true;
-				image_thread = boost::thread(boost::bind(&taraCamera::feedImages, this));
+				image_thread = boost::thread(boost::bind(&deimosCamera::feedImages, this));
 
 				std::string time_topic;
 				pnode.getParam("time_topic", time_topic);
-				time_sub = node.subscribe("time_topic", 1, &taraCamera::timeCb, this );
+				time_sub = node.subscribe("time_topic", 1, &deimosCamera::timeCb, this );
 
-				exposure_sub = node.subscribe ("set_exposure", 1, &taraCamera::callBackExposure, this);
-				brightness_sub = node.subscribe ("set_brightness", 1, &taraCamera::callBackBrightness, this);
+				exposure_sub = node.subscribe ("set_exposure", 1, &deimosCamera::callBackExposure, this);
+				brightness_sub = node.subscribe ("set_brightness", 1, &deimosCamera::callBackBrightness, this);
 
 				IMU_pub = node.advertise<sensor_msgs::Imu>("imu_data", 1, true);
 				IMU_inclination_pub = node.advertise<geometry_msgs::Point>("get_inclination", 1, true);
-				IMU_thread = boost::thread(boost::bind(&taraCamera::IMU_enable, this));
+				IMU_thread = boost::thread(boost::bind(&deimosCamera::IMU_enable, this));
 			}
 		}
 	
-	void taraCamera::callBackExposure (std_msgs::Float64 call_exposure_msg)
+	void deimosCamera::callBackExposure (std_msgs::Float64 call_exposure_msg)
 	{
 		DisableIMU();
 		exposure_value=(float)call_exposure_msg.data;
@@ -193,7 +205,7 @@ namespace uvc_camera {
 		}
 	}
 	
-	void taraCamera::callBackBrightness (std_msgs::Float64 call_brightness_msg)
+	void deimosCamera::callBackBrightness (std_msgs::Float64 call_brightness_msg)
 	{
 		DisableIMU();
 		brightness_value=(float)call_brightness_msg.data;
@@ -223,8 +235,8 @@ namespace uvc_camera {
 		}
 	}
 	
-	void taraCamera::sendInfoRight(ImagePtr &image, ros::Time time) {
-		CameraInfoPtr info(new CameraInfo(info_mgr_right.getCameraInfo()));
+	void deimosCamera::sendInfoRight(ImagePtr &image, ros::Time time) {
+		CameraInfoPtr info(new CameraInfo(info_mgr_right->getCameraInfo()));
 
 		/* Throw out any CamInfo that's not calibrated to this camera mode */
 		if (info->K[0] != 0.0 &&
@@ -247,8 +259,8 @@ namespace uvc_camera {
 
 		info_pub_right.publish(info);
 	}
-	void taraCamera::sendInfoLeft(ImagePtr &image, ros::Time time) {
-		CameraInfoPtr info(new CameraInfo(info_mgr_left.getCameraInfo()));
+	void deimosCamera::sendInfoLeft(ImagePtr &image, ros::Time time) {
+		CameraInfoPtr info(new CameraInfo(info_mgr_left->getCameraInfo()));
 
 		/* Throw out any CamInfo that's not calibrated to this camera mode */
 		if (info->K[0] != 0.0 &&
@@ -274,20 +286,20 @@ namespace uvc_camera {
 		info_pub_left.publish(info);
 	}
 
-	void taraCamera::timeCb(std_msgs::Time time)
+	void deimosCamera::timeCb(std_msgs::Time time)
 	{
 		time_mutex_.lock();
 		last_time = time.data;
 		time_mutex_.unlock();
 	}
 
-	void taraCamera::feedImages() {
+	void deimosCamera::feedImages() {
 		unsigned int pair_id = 0;
 		while (ok) {
-			unsigned char *img_frame = NULL;
-			unsigned char *right_frame = NULL;
-			unsigned char *left_frame = NULL;
-			unsigned char *concat_frame = NULL;
+			unsigned char *img_frame = nullptr;
+			unsigned char *right_frame = nullptr;
+			unsigned char *left_frame = nullptr;
+			unsigned char *concat_frame = nullptr;
 			uint32_t bytes_used;
 
 			int idx = cam->grabStereo(&img_frame, bytes_used, &left_frame, &right_frame, &concat_frame);
@@ -363,7 +375,7 @@ namespace uvc_camera {
 		}
 	}
 
-	taraCamera::~taraCamera() {
+	deimosCamera::~deimosCamera() {
 		if ( isCameraStereo == true )
 		{
 			ok = false;
@@ -374,10 +386,10 @@ namespace uvc_camera {
 			free(lIMUOutput);
 			IMU_thread.join();
 		}
-		if (cam) delete cam;
+		if(cam) delete cam;
 	}
 
-	BOOL taraCamera::DisableIMU()
+	BOOL deimosCamera::DisableIMU()
 	{
 		lIMUInput.IMU_UPDATE_MODE = IMU_CONT_UPDT_DIS;
 		lIMUInput.IMU_NUM_OF_VALUES = IMU_AXES_VALUES_MIN;
@@ -391,218 +403,12 @@ namespace uvc_camera {
 		}
 	}
 
-	BOOL taraCamera::LoadCameraMatrix()
-	{
-		unsigned char *IntrinsicBuffer, *ExtrinsicBuffer;
-		int LengthIntrinsic, LengthExtrinsic;
-
-		//Read the data from the flash
-		if(!StereoCalibRead(&IntrinsicBuffer, &ExtrinsicBuffer, &LengthIntrinsic, &LengthExtrinsic))
-		{
-			cout << "\nLoadCameraMatrix : Failed Reading Intrinsic and Extrinsic Files\n";
-			return FALSE;
-		}
-
-		FILE *IntFile=NULL, *ExtFile=NULL;
-
-		std::string intrinsic_file = "/.ros/camera_info/intrinsics.yaml";
-		std::string extrinsic_file =  "/.ros/camera_info/extrinsics.yaml";
-
-		std :: string intrinsic_file_path = getenv ("HOME") + intrinsic_file;
-		std :: string extrinsic_file_path = getenv ("HOME") + extrinsic_file;
-
-		IntFile = fopen( intrinsic_file_path.c_str(), "wb");
-		ExtFile = fopen( extrinsic_file_path.c_str(), "wb");
-
-		if(IntFile == NULL || ExtFile == NULL)
-		{
-			cout << "LoadCameraMatrix : Failed Opening Intrinsic and Extrinsic Files\n";
-			perror("failed ");
-			if(IntFile != NULL)
-				fclose(IntFile);
-			if(ExtFile != NULL)
-				fclose(ExtFile);
-
-			return FALSE;
-		}
-
-		if(LengthIntrinsic < 0 || LengthExtrinsic < 0)
-		{
-			cout << "LoadCameraMatrix : Invalid Intrinsic and Extrinsic File Length\n";
-			fclose(IntFile);
-			fclose(ExtFile);
-
-			return FALSE;
-		}
-
-		fwrite(IntrinsicBuffer, 1, LengthIntrinsic, IntFile);
-		fwrite(ExtrinsicBuffer, 1, LengthExtrinsic, ExtFile);
-
-		fclose(IntFile);
-		fclose(ExtFile);
-
-		free ( IntrinsicBuffer );
-		free ( ExtrinsicBuffer );
-
-		YAML::Node intrinsic_matrix = YAML::LoadFile(intrinsic_file_path.c_str());
-		YAML::Node extrinsic_matrix = YAML::LoadFile(extrinsic_file_path.c_str());
-
-		std::string cameraLeft_name =  "/.ros/camera_info/cameraLeft.yaml";
-		std::string cameraLeft_path = getenv("HOME") + cameraLeft_name;
-
-		std::string cameraRight_name =  "/.ros/camera_info/cameraRight.yaml";
-		std::string cameraRight_path = getenv("HOME") + cameraRight_name;
-
-		std::ofstream foutLeft(cameraLeft_path.c_str());
-		if (foutLeft == NULL)
-		{
-			printf ("Left camera matrix not found\n");
-		}
-
-		std::ofstream foutRight(cameraRight_path.c_str());	
-		if (foutRight == NULL)
-		{
-			printf ("Right camera matrix not found\n");
-		}
-
-		foutLeft << "image_width: 640\nimage_height: 480\ncamera_name: cameraLeft\ncamera_matrix:\n   rows: 3\n   cols: 3\n   data: [";
-		foutRight << "image_width: 640\nimage_height: 480\ncamera_name: cameraRight\ncamera_matrix:\n   rows: 3\n   cols: 3\n   data: [";   		
-
-		int m1_found = 0;
-		int d1_found = 0;
-		int m2_found = 0;
-		int d2_found = 0;
-
-		while ( !d2_found || !d1_found)
-		{
-			for(YAML::const_iterator it = intrinsic_matrix.begin(); it!= intrinsic_matrix.end(); ++it)
-			{
-				const char *buffer = ((it -> first.as<std::string>()).c_str());
-
-				if ( !strcmp (buffer, "M1") && m1_found == 0)
-				{
-					for (int iterator = 0; iterator < 9; iterator ++)
-					{
-						foutLeft << intrinsic_matrix["M1"]["data"][iterator];
-						if (iterator < 9 - 1)
-						{
-							foutLeft << ", ";
-						}
-					}
-					foutLeft << "]\ndistortion_model: plumb_bob\ndistortion_coefficients:\n   rows: 1\n   cols: 5\n   data: [";
-					m1_found++;
-				}
-				if ( !strcmp (buffer, "M2") && m2_found == 0)
-				{
-					for (int iterator = 0; iterator < 9; iterator ++)
-					{
-						foutRight << intrinsic_matrix["M2"]["data"][iterator];
-						if (iterator < 9 - 1)
-						{
-							foutRight << ", ";
-						}
-					}
-					foutRight << "]\ndistortion_model: plumb_bob\ndistortion_coefficients:\n   rows: 1\n   cols: 5\n   data: [";
-					m2_found++;
-				}
-				if ( !strcmp (buffer, "D1") && m1_found == 1 && d1_found == 0)
-				{
-					for (int iterator = 0; iterator < 5; iterator ++)
-					{
-						foutLeft << intrinsic_matrix["D1"]["data"][iterator];
-						if (iterator < 5 - 1)
-						{
-							foutLeft << ", ";
-						}
-					}
-					foutLeft << "]\n";
-					d1_found++;
-				}
-				if ( !strcmp (buffer, "D2") && m2_found == 1  && d2_found == 0)
-				{
-					for (int iterator = 0; iterator < 5; iterator ++)
-					{
-						foutRight << intrinsic_matrix["D2"]["data"][iterator];
-						if (iterator < 5 - 1)
-						{
-							foutRight << ", ";
-						}
-					}
-					d2_found++;
-					foutRight << "]\n";
-				}
-			}
-		}
-
-		foutLeft << "rectification_matrix:\n   rows: 3\n   cols: 3\n   data: [";
-		foutRight << "rectification_matrix:\n   rows: 3\n   cols: 3\n   data: [";
-
-		for(YAML::const_iterator it = extrinsic_matrix.begin(); it!= extrinsic_matrix.end(); ++it)
-		{
-			const char *buffer = ((it -> first.as<std::string>()).c_str());
-			if ( !strcmp (buffer, "R1"))
-			{
-				for (int iterator = 0; iterator < 9; iterator ++)
-				{
-					foutLeft << extrinsic_matrix["R1"]["data"][iterator];
-					if (iterator < 9 - 1)
-					{
-						foutLeft << ", ";
-					}
-				}
-
-				foutLeft << "]\nprojection_matrix:\n   rows: 3\n   cols: 4\n   data: [";
-			}
-			if ( !strcmp (buffer, "R2"))
-			{
-				for (int iterator = 0; iterator < 9; iterator ++)
-				{
-					foutRight << extrinsic_matrix["R2"]["data"][iterator];
-					if (iterator < 9 - 1)
-					{
-						foutRight << ", ";
-					}
-				}
-				foutRight << "]\nprojection_matrix:\n   rows: 3\n   cols: 4\n   data: [";
-			}
-			if ( !strcmp (buffer, "P1"))
-			{
-				for (int iterator = 0; iterator < 12; iterator ++)
-				{
-					foutLeft << extrinsic_matrix["P1"]["data"][iterator];
-					if (iterator < 12 - 1)
-					{
-						foutLeft << ", ";
-					}
-				}
-				foutLeft << "]\n";
-			}
-			if ( !strcmp (buffer, "P2"))
-			{
-				for (int iterator = 0; iterator < 12; iterator ++)
-				{
-					foutRight << extrinsic_matrix["P2"]["data"][iterator];
-					if (iterator < 12 - 1)
-					{
-						foutRight << ", ";
-					}
-				}
-				foutRight << "]\n";
-			}
-		}
-		std :: remove ( intrinsic_file_path.c_str() );
-		std :: remove ( extrinsic_file_path.c_str() );
-		foutLeft.close();
-		foutRight.close();
-		return TRUE;
-
-	}
-	double taraCamera::squared(double x)
+	double deimosCamera::squared(double x)
 	{
 		return x * x;
 	}
 
-	void taraCamera::getInclination(double g_x, double g_y, double g_z, double a_x, double a_y, double a_z)
+	void deimosCamera::getInclination(double g_x, double g_y, double g_z, double a_x, double a_y, double a_z)
 	{
 		int w = 0;
 		double tmpf = 0.0;
@@ -692,7 +498,7 @@ namespace uvc_camera {
 		IMU_inclination_pub.publish(IMUValue);
 
 	}
-	double taraCamera::GetIMUIntervalTime(IMUCONFIG_TypeDef	lIMUConfig)
+	double deimosCamera::GetIMUIntervalTime(IMUCONFIG_TypeDef	lIMUConfig)
 	{
 		double lIMUIntervalTime = 10;
 		if(lIMUConfig.IMU_MODE == IMU_ACC_GYRO_ENABLE)
@@ -773,7 +579,7 @@ namespace uvc_camera {
 		return;
 	}
 
-	void taraCamera::SetIMUConfigDefaultEnable()
+	void deimosCamera::SetIMUConfigDefaultEnable()
 	{
 		UINT8 uStatus = 0;
 		//Configuring IMU rates
@@ -817,13 +623,13 @@ namespace uvc_camera {
 		}
 	}
 
-	void taraCamera::IMU_enable()
+	void deimosCamera::IMU_enable()
 	{
 		SetIMUConfigDefaultEnable();
 		//Allocating buffers for output structure			
 		lIMUOutput = (IMUDATAOUTPUT_TypeDef*)malloc(1 * sizeof(IMUDATAOUTPUT_TypeDef));
 		//Memory validation
-		if(lIMUOutput == NULL)
+		if(lIMUOutput == nullptr)
 		{
 			cout << "Memory Allocation for output failed\n";
 			return ;
@@ -848,7 +654,7 @@ namespace uvc_camera {
 		}
 	}
 
-	int taraCamera::econ_strcmp (const char *str1,const char *str2)
+	int deimosCamera::econ_strcmp (const char *str1,const char *str2)
 	{
 		int iter = 0;
 		for (iter = 0; str1 [iter] && str2 [iter] ; iter ++ )
@@ -883,7 +689,7 @@ namespace uvc_camera {
 		}
 	}
 	
-	BOOL taraCamera::checkFirmware (UINT8 MajorVersion, UINT8 MinorVersion1, UINT16 MinorVersion2, UINT16 MinorVersion3)
+	BOOL deimosCamera::checkFirmware (UINT8 MajorVersion, UINT8 MinorVersion1, UINT16 MinorVersion2, UINT16 MinorVersion3)
 	{
 		if ( MajorVersion > MajorVersion_t)
 		{
@@ -915,7 +721,7 @@ namespace uvc_camera {
 			}
 		}
 	}
-	void taraCamera::getOrientation(double gx, double gy, double gz, double ax, double ay, double az)
+	void deimosCamera::getOrientation(double gx, double gy, double gz, double ax, double ay, double az)
 	{
 		float recipNorm;
 		float s0, s1, s2, s3;
@@ -1012,6 +818,7 @@ namespace uvc_camera {
 		IMUValue.orientation.z = q3;
 #endif		
 		IMUValue.header.frame_id = frameIMU;
+		IMUValue.header.stamp = ros::Time::now();  
 		IMU_pub.publish(IMUValue);		
 	}
 
@@ -1019,7 +826,7 @@ namespace uvc_camera {
 	// Fast inverse square-root
 	// See: http://en.wikipedia.org/wiki/Fast_inverse_square_root
 
-	float taraCamera::invSqrt(float x)
+	float deimosCamera::invSqrt(float x)
 	{
 		float halfx = 0.5f * x;
 		float y = x;

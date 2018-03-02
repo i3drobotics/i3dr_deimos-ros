@@ -14,7 +14,7 @@
      </node>
      
      <group ns="stereo">
-        <node pkg="deimos" type="tara_node" name="deimos" output="screen" required="true">
+        <node pkg="deimos" type="deimos_node" name="deimos" output="screen" required="true">
             <param name="width" type="int" value="752" />
             <param name="height" type="int" value="480" />
             <param name="fps" type="int" value="60" />

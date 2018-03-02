@@ -751,7 +751,7 @@ int Cam::set_control(uint32_t id, int val)
 
 	if (ioctl(device_file_h_, VIDIOC_G_CTRL, &c) == 0)
 	{
-		printf("current value of %s is %d\n", queryctrl.name, c.value);
+		printf("Current value of %s is %d\n", queryctrl.name, c.value);
 	}
 
 //	printf("Setting control '%s' from %d to %d\n", queryctrl.name, c.value, val);

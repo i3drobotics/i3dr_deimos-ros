@@ -12,6 +12,7 @@
 #include "geometry_msgs/Point.h"
 #include "std_msgs/Bool.h"
 #include "sensor_msgs/Imu.h"
+#include <memory>
 
 using namespace std;
 
@@ -34,7 +35,7 @@ namespace uvc_camera {
 
 	void Sleep(unsigned int TimeInMilli);
 
-	class taraCamera {
+	class deimosCamera {
 		public:
 
 			IMUCONFIG_TypeDef lIMUConfig;
@@ -42,14 +43,13 @@ namespace uvc_camera {
 			IMUDATAOUTPUT_TypeDef *lIMUOutput;
 			bool isCameraStereo;
 
-			taraCamera(ros::NodeHandle comm_nh, ros::NodeHandle param_nh);
+			deimosCamera(ros::NodeHandle comm_nh, ros::NodeHandle param_nh);
 			void onInit();
 			void sendInfoLeft(sensor_msgs::ImagePtr &image, ros::Time time);
 			void sendInfoRight(sensor_msgs::ImagePtr &image, ros::Time time);
 			void feedImages();
-			~taraCamera();
+			~deimosCamera();
 			void timeCb(std_msgs::Time time);
-			BOOL LoadCameraMatrix();
 			//IMU
 			void getInclination(double w_x, double w_y, double w_z, double a_x, double a_y, double a_z);
 			// getOrientation return the orientation in quaternion format
@@ -72,8 +72,8 @@ namespace uvc_camera {
 			int  brightness_value;
 			bool rotate;
 
-			camera_info_manager::CameraInfoManager info_mgr_left;
-			camera_info_manager::CameraInfoManager info_mgr_right;
+			camera_info_manager::CameraInfoManager* info_mgr_left;
+			camera_info_manager::CameraInfoManager* info_mgr_right;
 
 			image_transport::Publisher pub, pub_left, pub_right, pub_concat;
 			ros::Publisher info_pub;

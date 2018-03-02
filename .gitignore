@@ -17,7 +17,7 @@ tags
 # Directories
 #
 */.tmp_versions/
-
+.vscode/
 #
 # Don't exclude
 #
