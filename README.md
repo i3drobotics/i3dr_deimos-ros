@@ -3,12 +3,24 @@ Deimos
 
 ROS driver for i3D Robotics' Deimos stereo camera, derived from the e-consystems See3CAM_Stereo (Tara) camera driver. This driver is in turn based on the [uvc_camera](https://github.com/ktossell/camera_umd/tree/master/uvc_camera) package. We have made significant improvements to the driver which make it a lot more usable in ROS.
 
-Quickstart
-==========
+Installation
+============
 
-Build the package in your workspace and run:
+You need a few dependencies, including `v4l2`:
+
+`sudo apt-get install libv4l-dev v4l-utils qv4l2 v4l2ucp`
+
+And some ROS bits which you may not already have:
+
+`sudo apt install ros-kinetic-joint-state-publisher ros-kinetic-stereo-image-proc ros-kinetic-robot-state-publisher ros-kinetic-xacro`
+
+Or you can run `rosdep install deimos` which should pull things from the package file.
+
+Add the package to your workspace as usual, build with catkin, source your `devel/setup.bash` file and then run:
 
 roslaunch deimos deimos.launch
+
+This package has been tested informally on Ubuntu 16.04, but should run on most distros. It has also been tested on the Jetson TX1 and TX2.
 
 Introduction
 ============
