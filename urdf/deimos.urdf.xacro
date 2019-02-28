@@ -1,11 +1,10 @@
 <?xml version="1.0"?>
 <!--
 Copyright (c) 2018, I3D Robotics Ltd.
+Edited: 2019, Marti Morta Garriga, Wood.
 -->
 
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
-
-    <xacro:property name="M_PI" value="3.14159"/>
 
     <xacro:macro name="deimos_camera">
 
@@ -17,10 +16,15 @@ Copyright (c) 2018, I3D Robotics Ltd.
     <link name="deimos_center">
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
+            <!-- uncomment if using mesh as cad model is rotated -->
+            <!-- <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/> -->
             <geometry>
-                <box size="0.0324 0.101 0.038"/>
-                <!--mesh filename="package://deimos/urdf/deimos.stl" /-->
+                <box size="0.03242 0.10175 0.038"/>
+                <!-- <mesh filename="package://deimos/urdf/deimos.stl" /> -->
             </geometry>
+            <material name="Red">
+                <color rgba="0.9 0.1 0.1 1.0"/>
+            </material>
         </visual>
     </link>
 
@@ -35,39 +39,40 @@ Copyright (c) 2018, I3D Robotics Ltd.
     <joint name="deimos_left_mount_joint" type="fixed">
         <parent link="deimos_left_mount"/>
         <child link="deimos_center"/>
-        <origin xyz="-0.13241 -${-0.017875+0.03} 0.025" rpy="0 0 0" />
+        <!-- <origin xyz="-0.13241 -${-0.017875+0.03} 0.025" rpy="0 0 0" comment="original" />  -->
+        <origin xyz="-0.013241 ${0.017875-0.03} 0.019" rpy="0 0 0" />
     </joint>
 
     <joint name="deimos_right_mount_joint" type="fixed">
         <parent link="deimos_left_mount"/>
         <child link="deimos_right_mount"/>
-        <origin xyz="0 0.03 0" rpy="0 0 0" />
+        <origin xyz="0 -0.03 0" rpy="0 0 0" />
     </joint>
 
     <joint name="deimos_right_camera_joint" type="fixed">
         <parent link="deimos_center"/>
         <child link="cameraRight"/>
-        <origin xyz="0 0.03 0" rpy="0 0 0" />
+        <origin xyz="0 -0.03 0" rpy="0 0 0" />
     </joint>
 
     <joint name="deimos_left_camera_joint" type="fixed">
         <parent link="deimos_center"/>
         <child link="cameraLeft"/>
-        <origin xyz="0 -0.03 0" rpy="0 0 0" />
+        <origin xyz="0 0.03 0" rpy="0 0 0" />
     </joint>
 
     <joint name="deimos_left_optical_joint" type="fixed">
         <parent link="cameraLeft"/>
         <child link="cameraLeft_optical"/>
 	<!-- Correct for the optical frame orientation -->
-        <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}" />
+        <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}" />
     </joint>
 
     <joint name="deimos_right_optical_joint" type="fixed">
         <parent link="cameraRight"/>
         <child link="cameraRight_optical"/>
 	<!-- Correct for the optical frame orientation -->
-        <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}" />
+        <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}" />
     </joint>
 
     <joint name="deimos_depth_camera_joint" type="fixed">
@@ -78,10 +83,100 @@ Copyright (c) 2018, I3D Robotics Ltd.
 
     <!-- Correct for IMU orientation, Z -> X -->
     <joint name="imu_joint" type="fixed">
-    	<origin xyz="0 0.015 -0.002" rpy="0 ${M_PI/2} 0" />
+    	<origin xyz="0 0.015 -0.002" rpy="0 ${pi/2} 0" />
     	<parent link="deimos_center" />
     	<child link="imu_link" />
     </joint>
     </xacro:macro>
+
+     <gazebo reference="cameraLeft">
+            <sensor type="multicamera" name="stereo_camera">
+            <update_rate>0.5</update_rate> <!-- reality 60fps on USB3-->
+            <camera name="left">
+                <horizontal_fov>1.04</horizontal_fov>
+                <image>
+                    <width>752</width>
+                    <height>480</height>
+                    <format>L8</format>
+                </image>
+                <clip>
+                    <near>0.02</near>
+                    <far>300</far>
+                </clip>
+                <noise>
+                    <type>gaussian</type>
+                    <mean>0.0</mean>
+                    <stddev>0.007</stddev>
+                </noise>
+            </camera>
+            <camera name="right">
+                <pose>0 -0.07 0 0 0 0</pose>
+                <horizontal_fov>1.3962634</horizontal_fov>
+                <image>
+                    <width>752</width>
+                    <height>480</height>
+                    <format>L8</format>
+                </image>
+                <clip>
+                    <near>0.02</near>
+                    <far>300</far>
+                </clip>
+                <noise>
+                    <type>gaussian</type>
+                    <mean>0.0</mean>
+                    <stddev>0.007</stddev>
+                </noise>
+            </camera>
+            <plugin name="stereo_camera_controller" filename="libgazebo_ros_multicamera.so">
+                <alwaysOn>true</alwaysOn>
+                <updateRate>0.5</updateRate>
+                <cameraName>i3dr_deimos</cameraName>
+                <imageTopicName>image_raw</imageTopicName>
+                <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+                <frameName>cameraLeft_optical</frameName>
+                <!--<rightFrameName>right_camera_optical_frame</rightFrameName>-->
+                <hackBaseline>0.07</hackBaseline>
+                <distortionK1>0.0</distortionK1>
+                <distortionK2>0.0</distortionK2>
+                <distortionK3>0.0</distortionK3>
+                <distortionT1>0.0</distortionT1>
+                <distortionT2>0.0</distortionT2>
+            </plugin>
+            </sensor>
+        </gazebo>
+
+        <gazebo reference="deimos_depth_camera">
+            <sensor type="depth" name="deimos_depth_camera">
+            <update_rate>0.5</update_rate>
+            <camera>
+                <horizontal_fov>${62.8 * pi/180.0}</horizontal_fov>
+                <image>
+                <format>R8G8B8</format>
+                <width>640</width>
+                <height>480</height>
+                </image>
+                <clip>
+                <near>0.05</near>
+                <far>12</far>
+                </clip>
+            </camera>
+            <plugin name="deimos_depth_camera_controller" filename="libgazebo_ros_openni_kinect.so">
+                <alwaysOn>true</alwaysOn>
+                <updateRate>0.5</updateRate>
+                <imageTopicName>i3dr_deimos_depth/image_raw</imageTopicName>
+                <cameraInfoTopicName>i3dr_deimos_depth/camera_info</cameraInfoTopicName>
+                <depthImageTopicName>i3dr_deimos_depth/depth/image_raw</depthImageTopicName>
+                <depthImageCameraInfoTopicName>i3dr_deimos_depth/depth/camera_info</depthImageCameraInfoTopicName>
+                <pointCloudTopicName>i3dr_deimos_depth/depth/points</pointCloudTopicName>
+                <frameName>cameraLeft_optical</frameName>
+                <distortion_k1>0.0</distortion_k1>
+                <distortion_k2>0.0</distortion_k2>
+                <distortion_k3>0.0</distortion_k3>
+                <distortion_t1>0.0</distortion_t1>
+                <distortion_t2>0.0</distortion_t2>
+            </plugin>
+            </sensor>
+    </gazebo>
+
 
 </robot>
