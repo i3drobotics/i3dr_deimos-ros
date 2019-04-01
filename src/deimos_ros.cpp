@@ -13,6 +13,9 @@
 
 #include "uvc_camera/deimos_ros.h"
 
+#define MADGWICK_EN 1
+#define IMU_ODOM_EN 1
+
 using namespace sensor_msgs;
 
 namespace uvc_camera {
@@ -170,6 +173,8 @@ namespace uvc_camera {
 				IMU_pub = node.advertise<sensor_msgs::Imu>("imu_data", 1, true);
 				IMU_inclination_pub = node.advertise<geometry_msgs::Point>("get_inclination", 1, true);
 				IMU_thread = boost::thread(boost::bind(&deimosCamera::IMU_enable, this));
+
+				IMU_odom_pub = node.advertise<nav_msgs::Odometry>("odom", 1);
 			}
 		}
 	
@@ -750,7 +755,7 @@ namespace uvc_camera {
 		// Orientation calculation implemented according to Madgwick
 		// Refer : http://x-io.co.uk/res/doc/madgwick_internal_report.pdf
 		// Accuracy - Unknown
-#if 0
+#if MADGWICK_EN
 		// Rate of change of quaternion from gyroscope
 		qDot1 = 0.5f * (-q1 * gx - q2 * gy - q3 * gz);
 		qDot2 = 0.5f * (q0 * gx + q2 * gz - q3 * gy);
@@ -817,9 +822,31 @@ namespace uvc_camera {
 		IMUValue.orientation.y = q2;
 		IMUValue.orientation.z = q3;
 #endif		
+
+#if IMU_ODOM_EN
+	nav_msgs::Odometry IMU_odom;
+	geometry_msgs::Quaternion odom_quat;
+	IMU_odom.header.stamp = ros::Time::now();
+    IMU_odom.header.frame_id = "odom";
+	//set the orientation
+	odom_quat.w = q0;
+	odom_quat.x = q1;
+	odom_quat.y = q2;
+	odom_quat.z = q3;
+	//set the position
+    IMU_odom.pose.pose.position.x = 0.0;
+    IMU_odom.pose.pose.position.y = 0.0;
+    IMU_odom.pose.pose.position.z = 0.0;
+    IMU_odom.pose.pose.orientation = odom_quat;
+	//set the covariance
+	//float64[36] covariance;
+	//IMU_odom.pose.covariance = covariance;
+	IMU_odom_pub.publish(IMU_odom);
+#endif
+
 		IMUValue.header.frame_id = frameIMU;
 		IMUValue.header.stamp = ros::Time::now();  
-		IMU_pub.publish(IMUValue);		
+		IMU_pub.publish(IMUValue);
 	}
 
 	//---------------------------------------------------------------------------------------------------

@@ -13,6 +13,7 @@
 #include "std_msgs/Bool.h"
 #include "sensor_msgs/Imu.h"
 #include <memory>
+#include <nav_msgs/Odometry.h>
 
 using namespace std;
 
@@ -83,6 +84,7 @@ namespace uvc_camera {
 			ros::Publisher brightness_pub;
 			ros::Publisher IMU_inclination_pub;
 			ros::Publisher IMU_pub;
+			ros::Publisher IMU_odom_pub;
 
 			ros::Subscriber time_sub;
 			ros::Subscriber exposure_sub;

@@ -15,15 +15,12 @@ Edited: 2019, Marti Morta Garriga, Wood.
 
     <link name="deimos_center">
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <!-- uncomment if using mesh as cad model is rotated -->
-            <!-- <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/> -->
+            <origin xyz="0 0 0" rpy="${pi/2} 0 ${pi/2}"/>
             <geometry>
-                <box size="0.03242 0.10175 0.038"/>
-                <!-- <mesh filename="package://deimos/urdf/deimos.stl" /> -->
+                <mesh filename="package://deimos/mesh/deimos.stl" />
             </geometry>
-            <material name="Red">
-                <color rgba="0.9 0.1 0.1 1.0"/>
+            <material name="Black">
+                <color rgba="0.1 0.1 0.1 1.0"/>
             </material>
         </visual>
     </link>
@@ -39,7 +36,7 @@ Edited: 2019, Marti Morta Garriga, Wood.
     <joint name="deimos_left_mount_joint" type="fixed">
         <parent link="deimos_left_mount"/>
         <child link="deimos_center"/>
-        <!-- <origin xyz="-0.13241 -${-0.017875+0.03} 0.025" rpy="0 0 0" comment="original" />  -->
+        <!--<origin xyz="0 0 0" rpy="0 0 0" />-->
         <origin xyz="-0.013241 ${0.017875-0.03} 0.019" rpy="0 0 0" />
     </joint>
 

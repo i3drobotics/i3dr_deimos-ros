@@ -2,9 +2,16 @@ cmake_minimum_required(VERSION 2.8.3)
 set (CMAKE_CXX_STANDARD 11)
 project(deimos)
 
-find_package(catkin REQUIRED COMPONENTS camera_info_manager image_transport nodelet roscpp sensor_msgs)
+find_package(catkin REQUIRED COMPONENTS 
+	nodelet rospy roscpp dynamic_reconfigure message_generation
+	camera_info_manager image_transport sensor_msgs stereo_msgs cv_bridge
+) 
 
 find_package(Boost REQUIRED COMPONENTS thread system)
+
+find_package(OpenCV REQUIRED)
+
+find_package(PCL 1.2 REQUIRED)
 
 FIND_PACKAGE(PkgConfig)
 PKG_CHECK_MODULES(PC_GLIB QUIET glib-2.0)
@@ -36,10 +43,8 @@ FIND_PATH(
 
 SET(GLIB_INCLUDE_DIRS ${GLIB_INCLUDE_DIR} ${GLIBCONFIG_INCLUDE_DIR})
 
-catkin_package(
-	INCLUDE_DIRS include
-	CATKIN_DEPENDS roscpp nodelet sensor_msgs
-#  DEPENDS system_lib
+generate_dynamic_reconfigure_options(
+	cfg/i3DR_Disparity.cfg
 )
 
 include_directories(
@@ -47,7 +52,18 @@ include_directories(
 	${catkin_INCLUDE_DIRS}
 	${CMAKE_CURRENT_SOURCE_DIR}/src/xunit
 	${GLIB_INCLUDE_DIRS}
+	${PCL_INCLUDE_DIRS}
 )
+
+catkin_package(
+	INCLUDE_DIRS include
+	CATKIN_DEPENDS roscpp nodelet std_msgs sensor_msgs
+	LIBRARIES ${PROJECT_NAME}
+#  DEPENDS system_lib
+)
+
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 add_library(xunit
   src/xunit/xunit_lib.c
@@ -65,49 +81,34 @@ target_link_libraries(xunit ${udev_LIBRARIES})
 add_executable(deimos_node src/deimos_node.cpp src/deimos_ros.cpp src/uvc_cam.cpp)
 target_link_libraries(deimos_node ${Boost_LIBRARIES} ${catkin_LIBRARIES} xunitTara ${GLIB2_LIBRARIES} -lv4l2 -lyaml-cpp -ludev -lglib-2.0)
 
+add_executable(
+	generate_point_cloud src/generate_point_cloud.cpp
+)
+target_link_libraries(
+	generate_point_cloud
+	${catkin_LIBRARIES}
+	${OpenCV_LIBRARIES}
+	${PCL_LIBRARIES}
+)
+
+add_executable(
+	generate_disparity src/generate_disparity.cpp
+)
+target_link_libraries(
+	generate_disparity
+	${catkin_LIBRARIES}
+	${OpenCV_LIBRARIES}
+)
+
+add_dependencies(generate_disparity ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(generate_disparity ${PROJECT_NAME}_gencfg)
+
 #############
 ## Install ##
 #############
-
-# all install targets should use catkin DESTINATION variables
-# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
-
-## Mark executable scripts (Python etc.) for installation
-## in contrast to setup.py, you can choose the destination
-# install(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
 
 install(TARGETS deimos_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
-
-## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
-
-## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
-
-#############
-## Testing ##
-#############
-
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_uvc_camera.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)

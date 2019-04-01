@@ -1,19 +1,19 @@
 <?xml version="1.0"?>
 <!--XML-->
-    <launch>
+<launch>
 
-     <param name="robot_description" command="$(find xacro)/xacro '$(find deimos)/urdf/standalone.urdf.xacro'" />
+    <param name="robot_description" command="$(find xacro)/xacro '$(find deimos)/urdf/standalone.urdf.xacro'" />
 
-     <arg name="gui" default="False" />
-     <arg name="use_tf_static" default="false"/> 
-     <param name="use_gui" value="$(arg gui)"/>
+    <arg name="gui" default="False" />
+    <arg name="use_tf_static" default="false"/>
+    <param name="use_gui" value="$(arg gui)"/>
 
-     <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" ></node>
-     <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
-	 <param name="use_tf_static" value="$(arg use_tf_static)"/>
-     </node>
-     
-     <group ns="stereo">
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"></node>
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
+        <param name="use_tf_static" value="$(arg use_tf_static)"/>
+    </node>
+
+    <group ns="stereo">
         <node pkg="deimos" type="deimos_node" name="deimos" output="screen" required="true">
             <param name="width" type="int" value="752" />
             <param name="height" type="int" value="480" />
@@ -25,13 +25,31 @@
         </node>
 
         <node pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc">
-	    <!-- BM, for some reason SGBM fails -->
-	        <param name="stereo_algorithm" value="0" />
-	        <param name="min_disparity" value="4" />
-	        <param name="disparity_range" value="128" />
+            <param name="stereo_algorithm" value="0" />
+            <param name="min_disparity" value="4" />
+            <param name="disparity_range" value="128" />
             <param name="correlation_window_size" value="35" />
-	    </node>
-   
+        </node>
+
+        <node pkg="deimos" type="generate_disparity" name="i3dr_disparity" output="screen">
+            <param name="stereo_algorithm" value="0" />
+            <param name="min_disparity" value="4" />
+            <param name="disparity_range" value="128" />
+            <param name="correlation_window_size" value="35" />
+        </node>
+
+        <node pkg="image_view" type="disparity_view" name="disparity_view">
+            <remap from="image" to="/stereo/i3dr_disparity" />
+        </node>
+
+        <!-- custom point cloud generator with normals from disparity image -->
+        <!--
+        <node pkg="deimos" type="generate_point_cloud" name="custom_point_cloud_generator">
+            <param name="disparity_node" value="/stereo/disparity" />
+            <param name="point_cloud_node" value="/stereo/normalPoints2" />
+        </node>
+        -->
+
     </group>
 
 </launch>
