@@ -2,7 +2,7 @@
 <!--XML-->
 <launch>
 
-    <param name="robot_description" command="$(find xacro)/xacro '$(find deimos)/urdf/standalone.urdf.xacro'" />
+    <param name="robot_description" command="$(find xacro)/xacro '$(find deimos)/urdf/deimos_scene.urdf.xacro'" />
 
     <arg name="gui" default="False" />
     <arg name="use_tf_static" default="false"/>

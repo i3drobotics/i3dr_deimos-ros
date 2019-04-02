@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!--
+Copyright (c) 2019, I3D Robotics Ltd.
+-->
+
+<robot name="phobos" 
+    xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <xacro:include filename="$(find deimos)/urdf/i3dr_stereo_camera.urdf.xacro" />
+
+    <xacro:i3dr_stereo_camera camera_name="phobos" baseline="0.3" toe_in="0.139626" width="0.140" height="0.390" length="0.050" mount_offset_x="0.07" image_width="2448" image_height="2048" image_format="RGB8" hfov="1.05" focus_near="0.8" focus_far="1.25" r="1" g="0.5" b="0"/>
+
+</robot>

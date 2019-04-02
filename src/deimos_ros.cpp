@@ -37,8 +37,8 @@ namespace uvc_camera {
 			frameIMU = "imu_link";
 			frameImageLeft = "/left/image_raw";
 			frameImageRight = "/right/image_raw";
-			frameCameraInfoLeft = "cameraLeft_optical";
-			frameCameraInfoRight = "cameraLeft_optical";
+			frameCameraInfoLeft = "deimos_cameraLeft_optical";
+			frameCameraInfoRight = "deimos_cameraLeft_optical";
 			rotate = false;
 			exposure_value = 0;
 			brightness_value = 0;
