@@ -14,7 +14,7 @@
 #include "uvc_camera/deimos_ros.h"
 
 #define MADGWICK_EN 1
-#define IMU_ODOM_EN 1
+#define IMU_ODOM_EN 0
 
 using namespace sensor_msgs;
 
@@ -34,11 +34,11 @@ namespace uvc_camera {
 			frames_to_skip = 0;
 			device = "/dev/video0";
 			frame = "camera";
-			frameIMU = "imu_link";
-			frameImageLeft = "/left/image_raw";
-			frameImageRight = "/right/image_raw";
-			frameCameraInfoLeft = "deimos_cameraLeft_optical";
-			frameCameraInfoRight = "deimos_cameraLeft_optical";
+			frameIMU = "deimos_imu_link";
+			frameImageLeft = "deimos_depth_optical_frame";
+			frameImageRight = "deimos_depth_optical_frame";
+			frameCameraInfoLeft = "deimos_depth_optical_frame";
+			frameCameraInfoRight = "deimos_depth_optical_frame";
 			rotate = false;
 			exposure_value = 0;
 			brightness_value = 0;
@@ -134,6 +134,24 @@ namespace uvc_camera {
 					printf ("setting exposure : FAIL\n");
 				
 				}
+
+				returnValue = cam->set_control(V4L2_CID_AUTOGAIN , false); // brightness
+				if ( false == returnValue)
+				{
+					printf ("setting auto gain : FAIL\n");
+				}
+
+				returnValue = cam->set_control(V4L2_CID_EXPOSURE_AUTO , false); // auto exposure
+				if ( false == returnValue)
+				{
+					printf ("setting auto exposure : FAIL\n");
+				}
+
+				returnValue = cam->set_control(V4L2_CID_GAIN , 0); // brightness
+				if ( false == returnValue)
+				{
+					printf ("setting gain : FAIL\n");
+				}
 			
 				std_msgs::Float64 exposure_msg;
 				exposure_msg.data=(float)exposure_value;
@@ -170,7 +188,7 @@ namespace uvc_camera {
 				exposure_sub = node.subscribe ("set_exposure", 1, &deimosCamera::callBackExposure, this);
 				brightness_sub = node.subscribe ("set_brightness", 1, &deimosCamera::callBackBrightness, this);
 
-				IMU_pub = node.advertise<sensor_msgs::Imu>("imu_data", 1, true);
+				IMU_pub = node.advertise<sensor_msgs::Imu>("imu", 1, true);
 				IMU_inclination_pub = node.advertise<geometry_msgs::Point>("get_inclination", 1, true);
 				IMU_thread = boost::thread(boost::bind(&deimosCamera::IMU_enable, this));
 
@@ -735,6 +753,18 @@ namespace uvc_camera {
 		
 		
 		sensor_msgs::Imu IMUValue;
+
+		IMUValue.orientation.x = 0.0;
+		IMUValue.orientation.y = 0.0;
+		IMUValue.orientation.z = 0.0;
+		IMUValue.orientation.w = 0.0;
+
+		double linear_accel_cov = 0.01;
+		double angular_velocity_cov = 0.01;
+
+		IMUValue.orientation_covariance = { -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    	IMUValue.linear_acceleration_covariance = { linear_accel_cov, 0.0, 0.0, 0.0, linear_accel_cov, 0.0, 0.0, 0.0, linear_accel_cov};
+    	IMUValue.angular_velocity_covariance = { angular_velocity_cov, 0.0, 0.0, 0.0, angular_velocity_cov, 0.0, 0.0, 0.0, angular_velocity_cov};
 		
 		// To convert acceleration from 'mg' to 'm/s2'
 		IMUValue.linear_acceleration.x = ax * 9.80665 / 1000;
@@ -751,6 +781,8 @@ namespace uvc_camera {
 		IMUValue.angular_velocity.x = gx;
 		IMUValue.angular_velocity.y = gy;
 		IMUValue.angular_velocity.z = gz;
+
+
 		
 		// Orientation calculation implemented according to Madgwick
 		// Refer : http://x-io.co.uk/res/doc/madgwick_internal_report.pdf

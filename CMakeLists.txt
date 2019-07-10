@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 set (CMAKE_CXX_STANDARD 11)
-project(deimos)
+project(i3dr_deimos)
 
 find_package(catkin REQUIRED COMPONENTS 
 	nodelet rospy roscpp dynamic_reconfigure message_generation
@@ -10,8 +10,6 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Boost REQUIRED COMPONENTS thread system)
 
 find_package(OpenCV REQUIRED)
-
-find_package(PCL 1.2 REQUIRED)
 
 FIND_PACKAGE(PkgConfig)
 PKG_CHECK_MODULES(PC_GLIB QUIET glib-2.0)
@@ -43,9 +41,7 @@ FIND_PATH(
 
 SET(GLIB_INCLUDE_DIRS ${GLIB_INCLUDE_DIR} ${GLIBCONFIG_INCLUDE_DIR})
 
-generate_dynamic_reconfigure_options(
-	cfg/i3DR_Disparity.cfg
-)
+generate_dynamic_reconfigure_options()
 
 include_directories(
 	include
@@ -62,9 +58,6 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
-
 add_library(xunit
   src/xunit/xunit_lib.c
   src/xunit/xunit_lib_cug.c
@@ -80,28 +73,6 @@ target_link_libraries(xunit ${udev_LIBRARIES})
 
 add_executable(deimos_node src/deimos_node.cpp src/deimos_ros.cpp src/uvc_cam.cpp)
 target_link_libraries(deimos_node ${Boost_LIBRARIES} ${catkin_LIBRARIES} xunitTara ${GLIB2_LIBRARIES} -lv4l2 -lyaml-cpp -ludev -lglib-2.0)
-
-add_executable(
-	generate_point_cloud src/generate_point_cloud.cpp
-)
-target_link_libraries(
-	generate_point_cloud
-	${catkin_LIBRARIES}
-	${OpenCV_LIBRARIES}
-	${PCL_LIBRARIES}
-)
-
-add_executable(
-	generate_disparity src/generate_disparity.cpp
-)
-target_link_libraries(
-	generate_disparity
-	${catkin_LIBRARIES}
-	${OpenCV_LIBRARIES}
-)
-
-add_dependencies(generate_disparity ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(generate_disparity ${PROJECT_NAME}_gencfg)
 
 #############
 ## Install ##

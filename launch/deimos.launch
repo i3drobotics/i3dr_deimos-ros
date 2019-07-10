@@ -1,55 +1,54 @@
 <?xml version="1.0"?>
 <!--XML-->
 <launch>
+    <!-- SETUP ARGUMENTS -->
+    <!-- enable/disable rviz -->
+    <arg name="rviz" default="true" />
+    <!-- enable/disable calibration -->
+    <arg name="calibrate" default="false"/>
 
-    <param name="robot_description" command="$(find xacro)/xacro '$(find deimos)/urdf/deimos_scene.urdf.xacro'" />
-
-    <arg name="gui" default="False" />
+    <arg name="camera_name" default="deimos"/>
+ 
+    <!-- SETUP ROBOT MODEL -->
+    <!-- (robot model should be handelled by master) -->
+    <param name="$(arg camera_name)_robot_description" command="$(find xacro)/xacro '$(find i3dr_deimos)/urdf/deimos_scene.urdf.xacro'" />
     <arg name="use_tf_static" default="false"/>
-    <param name="use_gui" value="$(arg gui)"/>
-
-    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"></node>
-    <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
+    <node name="robot_state_publisher_deimos" pkg="robot_state_publisher" type="state_publisher">
+        <remap from="robot_description" to="$(arg camera_name)_robot_description"/>
         <param name="use_tf_static" value="$(arg use_tf_static)"/>
     </node>
 
-    <group ns="stereo">
-        <node pkg="deimos" type="deimos_node" name="deimos" output="screen" required="true">
-            <param name="width" type="int" value="752" />
-            <param name="height" type="int" value="480" />
-            <param name="fps" type="int" value="60" />
-            <param name="device" type="string" value="/dev/video0" />
-            <param name="exposureValue" type="int" value="1" />
-            <param name="cameraLeft_info_url" type="string" value="file://${ROS_HOME}/camera_info/left.yaml" />
-            <param name="cameraRight_info_url" type="string" value="file://${ROS_HOME}/camera_info/right.yaml" />
-        </node>
+    <!-- STEREO CAPTURE -->
+    <include file="$(find i3dr_deimos)/launch/deimos_capture.launch">
+        <arg name="camera_namespace" value="$(arg camera_name)"/>
+        <arg name="device" value="/dev/video0"/>
+        <arg name="exposure" default="5000" />
+    </include>
 
-        <node pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc">
-            <param name="stereo_algorithm" value="0" />
-            <param name="min_disparity" value="4" />
-            <param name="disparity_range" value="128" />
-            <param name="correlation_window_size" value="35" />
-        </node>
+    <!-- STEREO CALIBRATION -->
+    <include if="$(arg calibrate)" file="$(find i3dr_stereo_camera)/launch/stereo_calibration.launch">
+        <arg name="camera_namespace" value="$(arg camera_name)"/>
+    </include>
 
-        <node pkg="deimos" type="generate_disparity" name="i3dr_disparity" output="screen">
-            <param name="stereo_algorithm" value="0" />
-            <param name="min_disparity" value="4" />
-            <param name="disparity_range" value="128" />
-            <param name="correlation_window_size" value="35" />
-        </node>
+    <!-- STEREO MATCHER -->
+    <include file="$(find i3dr_stereo_camera)/launch/stereo_matcher.launch">
+        <arg name="use_i3dr_matcher" value="true"/>
 
-        <node pkg="image_view" type="disparity_view" name="disparity_view">
-            <remap from="image" to="/stereo/i3dr_disparity" />
-        </node>
+        <arg name="camera_namespace" value="$(arg camera_name)"/>
+        <arg name="gui" value="false"/>
+        <arg name="stereo_algorithm" value="2" />
+        <arg name="min_disparity" value="-18" />
+        <arg name="disparity_range" value="96" />
+        <arg name="correlation_window_size" value="45" />
+        <arg name="uniqueness_ratio" value="2" />
+        <arg name="speckle_size" value="1000" />
+        <arg name="prefilter_size" value="147" />
+        <arg name="prefilter_cap" value="7" />
+    </include>
 
-        <!-- custom point cloud generator with normals from disparity image -->
-        <!--
-        <node pkg="deimos" type="generate_point_cloud" name="custom_point_cloud_generator">
-            <param name="disparity_node" value="/stereo/disparity" />
-            <param name="point_cloud_node" value="/stereo/normalPoints2" />
-        </node>
-        -->
-
-    </group>
+    <!-- DISPLAY -->
+    <!-- run rviz with config file -->
+    <node if="$(arg rviz)" pkg="rviz" type="rviz" name="rivz" 
+        args="-d $(find i3dr_deimos)/rviz/scene.rviz"/>
 
 </launch>

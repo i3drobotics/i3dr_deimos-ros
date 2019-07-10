@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
 
-  <name>deimos</name>
+  <name>i3dr_deimos</name>
   <version>0.3.1</version>
   <description>
      A collection of node(let)s that stream images from USB cameras (UVC)
@@ -12,7 +12,9 @@
   </description>
 
   <maintainer email="jveitch@i3drobotics.com">Josh Veitch-Michaelis</maintainer>
+  <maintainer email="bknight@i3drobotics.com">Ben Knight</maintainer>
   <author email="jveitch@i3drobotics.com">Josh Veitch-Michaelis</author>
+  <author email="bknight@i3drobotics.com">Ben Knight</author>
   
   <license>GPLv2</license>
 
@@ -33,5 +35,6 @@
   <depend>dynamic_reconfigure</depend>
   <depend>pcl_ros</depend>
   <depend>cv_bridge</depend>
+  <depend>i3dr_stereo_camera</depend>
 
 </package>

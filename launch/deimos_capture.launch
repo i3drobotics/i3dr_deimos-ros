@@ -1,0 +1,18 @@
+<launch>
+    <!-- STEREO CAPTURE -->
+    <arg name="camera_namespace" default="deimos"/>
+    <arg name="device" default="/dev/video0"/>
+    <arg name="exposure" default="1" />
+    <group ns="$(arg camera_namespace)">
+        <node pkg="i3dr_deimos" type="deimos_node" name="deimos">
+            <param name="width" type="int" value="752" />
+            <param name="height" type="int" value="480" />
+            <param name="fps" type="int" value="60" />
+            <param name="frame_id" type="string" value="deimos_depth_optical_frame"/>
+            <param name="device" type="string" value="$(arg device)" />
+            <param name="exposureValue" type="int" value="$(arg exposure)" />
+            <param name="cameraLeft_info_url" type="string" value="file://${ROS_HOME}/camera_info/deimos/deimos_left.yaml" />
+            <param name="cameraRight_info_url" type="string" value="file://${ROS_HOME}/camera_info/deimos/deimos_right.yaml" />
+        </node>
+    </group>
+</launch>
