@@ -35,6 +35,8 @@ Edited: 2019, Marti Morta Garriga, Wood.
     <link name="${camera_name}_mount_point_1"/>
     <link name="${camera_name}_mount_point_2"/>
 
+    <link name="${camera_name}_probe_mount"/>
+
     <link name="${camera_name}_center">
         <visual>
             <xacro:if value="${(en_mesh == 'true')}">
@@ -95,6 +97,12 @@ Edited: 2019, Marti Morta Garriga, Wood.
         <parent link="${camera_name}_base_link"/>
         <child link="${camera_name}_center"/>
         <origin xyz="0 0 0" rpy="0 0 ${-pi/2}" />
+    </joint>
+
+    <joint name="${camera_name}_probe_mount_joint" type="fixed">
+        <parent link="${camera_name}_base_link"/>
+        <child link="${camera_name}_probe_mount"/>
+        <origin xyz="${0} 0 ${0}" rpy="0 0 0" />
     </joint>
 
     <joint name="${camera_name}_mount_point_1_joint" type="fixed">
