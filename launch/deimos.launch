@@ -3,7 +3,7 @@
 <launch>
     <!-- SETUP ARGUMENTS -->
     <!-- enable/disable rviz -->
-    <arg name="rviz" default="true" />
+    <arg name="rviz" default="false" />
     <!-- enable/disable calibration -->
     <arg name="calibrate" default="false"/>
 
@@ -35,11 +35,12 @@
         <arg name="use_i3dr_matcher" value="true"/>
 
         <arg name="camera_namespace" value="$(arg camera_name)"/>
+        <arg name="camera_name" value="$(arg camera_name)"/>
         <arg name="gui" value="false"/>
-        <arg name="stereo_algorithm" value="2" />
+        <arg name="stereo_algorithm" value="1" />
         <arg name="min_disparity" value="-18" />
         <arg name="disparity_range" value="96" />
-        <arg name="correlation_window_size" value="45" />
+        <arg name="correlation_window_size" value="19" />
         <arg name="uniqueness_ratio" value="2" />
         <arg name="speckle_size" value="1000" />
         <arg name="prefilter_size" value="147" />

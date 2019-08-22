@@ -12,6 +12,12 @@ You need a few dependencies, including `v4l2`:
 sudo apt-get install libv4l-dev v4l-utils qv4l2 v4l2ucp
 ```
 
+Copy udev rules for usb permission:
+
+```bash
+sudo cp udev/99-uvc.rules /etc/udev/rules.d/
+```
+
 This package relies on the **i3dr_stereo_camera** package for generating of 3D and urdfs. Please make sure you have the **i3dr_stereo_camera** package in your workspace.
 [link](https://github.com/i3drobotics/i3dr_stereo_camera-ros.git)
 

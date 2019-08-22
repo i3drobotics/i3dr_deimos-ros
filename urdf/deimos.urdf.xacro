@@ -88,7 +88,7 @@ Edited: 2019, Marti Morta Garriga, Wood.
     </joint>
 
     <joint name="${camera_name}_depth_optical_joint" type="fixed">
-        <parent link="${camera_name}_cameraLeft"/>
+        <parent link="${camera_name}_cameraLeft_optical"/>
         <child link="${camera_name}_depth_optical_frame"/>
         <origin xyz="0 0 0" rpy="0 0 0" />
     </joint>
