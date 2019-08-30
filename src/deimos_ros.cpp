@@ -35,10 +35,10 @@ namespace uvc_camera {
 			device = "/dev/video0";
 			frame = "camera";
 			frameIMU = "deimos_imu_link";
-			frameImageLeft = "deimos_depth_optical_frame";
-			frameImageRight = "deimos_depth_optical_frame";
-			frameCameraInfoLeft = "deimos_depth_optical_frame";
-			frameCameraInfoRight = "deimos_depth_optical_frame";
+			frameImageLeft = frame;
+			frameImageRight = frame;
+			frameCameraInfoLeft = frame;
+			frameCameraInfoRight = frame;
 			rotate = false;
 			exposure_value = 0;
 			brightness_value = 0;
@@ -57,6 +57,11 @@ namespace uvc_camera {
 			pnode.getParam("width", width);
 			pnode.getParam("height", height);
 			pnode.getParam("frame_id", frame);
+
+      frameImageLeft = frame;
+			frameImageRight = frame;
+			frameCameraInfoLeft = frame;
+			frameCameraInfoRight = frame;
 
 			// changing start
 			pnode.getParam ("exposureValue", exposure_value);
