@@ -36,11 +36,11 @@
 
         <arg name="camera_namespace" value="$(arg camera_name)"/>
         <arg name="camera_name" value="$(arg camera_name)"/>
-        <arg name="gui" value="false"/>
-        <arg name="stereo_algorithm" value="1" />
+        <arg name="gui" value="true"/>
+        <arg name="stereo_algorithm" value="0" />
         <arg name="min_disparity" value="-18" />
         <arg name="disparity_range" value="96" />
-        <arg name="correlation_window_size" value="19" />
+        <arg name="correlation_window_size" value="9" />
         <arg name="uniqueness_ratio" value="2" />
         <arg name="speckle_size" value="1000" />
         <arg name="prefilter_size" value="147" />
