@@ -7,7 +7,7 @@
     <arg name="cameraLeft_info_url"  default="file://${ROS_HOME}/camera_info/deimos/deimos_left.yaml" />
     <arg name="cameraRight_info_url" default="file://${ROS_HOME}/camera_info/deimos/deimos_right.yaml" />
     <group ns="$(arg camera_namespace)">
-        <node pkg="i3dr_deimos" type="deimos_node" name="deimos">
+        <node pkg="i3dr_deimos" type="deimos_node" name="deimos" output="screen">
             <param name="width" type="int" value="752" />
             <param name="height" type="int" value="480" />
             <param name="fps" type="int" value="60" />

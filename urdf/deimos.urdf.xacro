@@ -5,7 +5,7 @@ Edited: 2019, Marti Morta Garriga, Wood.
 -->
 
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
-    <xacro:macro name="deimos_camera" params="camera_name:=deimos en_mesh:=false imu_en:=false">
+    <xacro:macro name="deimos_camera" params="camera_name:=deimos en_mesh:=false en_imu:=false">
 
     <xacro:property name="height" value="0.038"/>
     <xacro:property name="width" value="0.10175"/>
@@ -31,6 +31,10 @@ Edited: 2019, Marti Morta Garriga, Wood.
     <link name="${camera_name}_depth_optical_frame" />
 
     <link name="${camera_name}_base_link" />
+
+    <xacro:if value="${(en_imu == 'true')}">
+        <link name="${camera_name}_imu_link"/>
+    </xacro:if>
 
     <link name="${camera_name}_mount_point_1"/>
     <link name="${camera_name}_mount_point_2"/>
@@ -115,12 +119,12 @@ Edited: 2019, Marti Morta Garriga, Wood.
         <child link="${camera_name}_mount_point_2"/>
         <origin xyz="${(-0.03/2)-0.002} -0.007 ${-0.038/2}" rpy="0 0 0" />
     </joint>
-    <xacro:if value="${(imu_en == 'true')}">
+    <xacro:if value="${(en_imu == 'true')}">
         <!-- Correct for IMU orientation, Z -> X -->
         <joint name="${camera_name}_imu_joint" type="fixed">
             <origin xyz="0 0 0" rpy="0 ${pi/2} 0" />
-            <parent link="${camera_name}_imu_link" />
-            <child link="${camera_name}_base_link" />
+            <parent link="${camera_name}_base_link" />
+            <child link="${camera_name}_imu_link" />
         </joint>
     </xacro:if>
 

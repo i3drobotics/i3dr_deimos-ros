@@ -90,6 +90,9 @@ deimosCamera::deimosCamera(ros::NodeHandle _comm_nh, ros::NodeHandle _param_nh) 
 	pnode.getParam("leftCameraName", leftCameraName);
 	pnode.getParam("rightCameraName", leftCameraName);
 
+	ROS_INFO("Camera Left Info URL: %s",urlLeft.c_str());
+	ROS_INFO("Camera Left Info URL: %s",urlRight.c_str());
+
 	info_mgr_left = new camera_info_manager::CameraInfoManager(node_left, leftCameraName, urlLeft);
 	info_mgr_right = new camera_info_manager::CameraInfoManager(node_right, rightCameraName, urlRight);
 

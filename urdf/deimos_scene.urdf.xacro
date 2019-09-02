@@ -14,7 +14,7 @@ Copyright (c) 2019, I3D Robotics Ltd.
 -->
 
     <xacro:include filename="$(find i3dr_deimos)/urdf/deimos.urdf.xacro" />
-    <xacro:deimos_camera camera_name="deimos" en_mesh="true"/>
+    <xacro:deimos_camera camera_name="deimos" en_mesh="true" en_imu="true"/>
     <!--<joint name="world_imu_joint" type="floating">
         <parent link="deimos_imu_link"/>
         <child link="odom"/>
