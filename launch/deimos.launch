@@ -6,37 +6,41 @@
     <arg name="rviz" default="false" />
     <!-- enable/disable calibration -->
     <arg name="calibrate" default="false"/>
-
-    <arg name="camera_name" default="deimos"/>
- 
+    <!-- namespace for camera -->
+    <arg name="camera_namespace" default="deimos"/>
+    
+    <!-- this should not change as it is the namespace of frames in the urdf-->
+    <arg name="urdf_namespace" value="deimos"/>
+  
     <!-- SETUP ROBOT MODEL -->
-    <!-- (robot model should be handelled by master) -->
-    <param name="$(arg camera_name)_robot_description" command="$(find xacro)/xacro '$(find i3dr_deimos)/urdf/deimos_scene.urdf.xacro'" />
-    <arg name="use_tf_static" default="false"/>
+    <param name="$(arg urdf_namespace)_robot_description" command="$(find xacro)/xacro '$(find i3dr_deimos)/urdf/deimos_scene.urdf.xacro'" />
     <node name="robot_state_publisher_deimos" pkg="robot_state_publisher" type="state_publisher">
-        <remap from="robot_description" to="$(arg camera_name)_robot_description"/>
-        <param name="use_tf_static" value="$(arg use_tf_static)"/>
+        <remap from="robot_description" to="$(arg urdf_namespace)_robot_description"/>
     </node>
 
     <!-- STEREO CAPTURE -->
     <include file="$(find i3dr_deimos)/launch/deimos_capture.launch">
-        <arg name="camera_namespace" value="$(arg camera_name)"/>
+        <arg name="camera_namespace" value="$(arg camera_namespace)"/>
         <arg name="device" value="/dev/video0"/>
-        <arg name="exposure" default="5000" />
+        <arg name="exposure" value="5000" />
+        <arg name="frame_id" value="$(arg urdf_namespace)_depth_optical_frame" />
     </include>
 
     <!-- STEREO CALIBRATION -->
     <include if="$(arg calibrate)" file="$(find i3dr_stereo_camera)/launch/stereo_calibration.launch">
-        <arg name="camera_namespace" value="$(arg camera_name)"/>
+        <arg name="camera_namespace" value="$(arg camera_namespace)"/>
     </include>
 
     <!-- STEREO MATCHER -->
     <include file="$(find i3dr_stereo_camera)/launch/stereo_matcher.launch">
         <arg name="use_i3dr_matcher" value="true"/>
 
-        <arg name="camera_namespace" value="$(arg camera_name)"/>
-        <arg name="camera_name" value="$(arg camera_name)"/>
-        <arg name="gui" value="true"/>
+        <!-- Matcher Parameters -->
+        <!-- see link below for details on matcher parameters -->
+        <!-- http://wiki.ros.org/stereo_image_proc/Tutorials/ChoosingGoodStereoParameters -->
+        <!-- algorithm 0: OpenCV block -->
+        <!-- algorithm 1: OpenCV SGBM -->
+        <!-- algorithm 2: JR SGM -->
         <arg name="stereo_algorithm" value="0" />
         <arg name="min_disparity" value="-18" />
         <arg name="disparity_range" value="96" />
@@ -45,6 +49,14 @@
         <arg name="speckle_size" value="1000" />
         <arg name="prefilter_size" value="147" />
         <arg name="prefilter_cap" value="7" />
+
+        <!-- maximum depth value (m) -->
+        <!-- reduce this if RTabMap is showing flat image in back of 3D -->
+        <arg name="depth_max" default="3" />
+
+        <arg name="gui" value="true"/>
+        <arg name="camera_namespace" value="$(arg camera_namespace)"/>
+        <arg name="frame_id" value="$(arg urdf_namespace)_depth_optical_frame" />
     </include>
 
     <!-- DISPLAY -->
