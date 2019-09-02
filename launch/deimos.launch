@@ -46,7 +46,7 @@
         <arg name="disparity_range" value="96" />
         <arg name="correlation_window_size" value="19" />
         <arg name="uniqueness_ratio" value="2" />
-        <arg name="texture_threshol" value="1" />
+        <arg name="texture_threshold" value="1" />
         <arg name="speckle_range" value="4" />
         <arg name="speckle_size" value="1000" />
         <arg name="prefilter_size" value="147" />
