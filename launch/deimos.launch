@@ -44,11 +44,16 @@
         <arg name="stereo_algorithm" value="0" />
         <arg name="min_disparity" value="-18" />
         <arg name="disparity_range" value="96" />
-        <arg name="correlation_window_size" value="9" />
+        <arg name="correlation_window_size" value="19" />
         <arg name="uniqueness_ratio" value="2" />
+        <arg name="texture_threshol" value="1" />
+        <arg name="speckle_range" value="4" />
         <arg name="speckle_size" value="1000" />
         <arg name="prefilter_size" value="147" />
         <arg name="prefilter_cap" value="7" />
+        <arg name="p1" value="200"/>
+        <arg name="p2" value="400"/>
+        <arg name="interp" value="false" />
 
         <!-- maximum depth value (m) -->
         <!-- reduce this if RTabMap is showing flat image in back of 3D -->
