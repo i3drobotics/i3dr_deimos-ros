@@ -61,7 +61,7 @@
         <!-- reduce this if RTabMap is showing flat image in back of 3D -->
         <arg name="depth_max" default="3" />
 
-        <arg name="gui" value="true"/>
+        <arg name="gui" value="false"/>
         <arg name="camera_namespace" value="$(arg camera_namespace)"/>
         <arg name="frame_id" value="$(arg urdf_namespace)_depth_optical_frame" />
     </include>
