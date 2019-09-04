@@ -8,6 +8,7 @@
     <arg name="calibrate" default="false"/>
     <!-- namespace for camera -->
     <arg name="camera_namespace" default="deimos"/>
+    <arg name="stereo_match" default="true"/>
     
     <!-- this should not change as it is the namespace of frames in the urdf-->
     <arg name="urdf_namespace" value="deimos"/>
@@ -31,11 +32,15 @@
     <!-- STEREO CALIBRATION -->
     <include if="$(arg calibrate)" file="$(find i3dr_stereo_camera)/launch/stereo_calibration.launch">
         <arg name="camera_namespace" value="$(arg camera_namespace)"/>
+        <arg name="multi_board" value="true" />
+        <arg name="grid_rows" value="8" />
     </include>
 
     <!-- STEREO MATCHER -->
-    <include file="$(find i3dr_stereo_camera)/launch/stereo_matcher.launch">
+    <include if="$(arg stereo_match)" file="$(find i3dr_stereo_camera)/launch/stereo_matcher.launch">
         <arg name="use_i3dr_matcher" value="true"/>
+
+        <arg name="run_remote" value="false"/>
 
         <!-- Matcher Parameters -->
         <!-- see link below for details on matcher parameters -->
@@ -44,18 +49,6 @@
         <!-- algorithm 1: OpenCV SGBM -->
         <!-- algorithm 2: JR SGM -->
         <arg name="stereo_algorithm" value="0" />
-        <arg name="min_disparity" value="-18" />
-        <arg name="disparity_range" value="96" />
-        <arg name="correlation_window_size" value="19" />
-        <arg name="uniqueness_ratio" value="2" />
-        <arg name="texture_threshold" value="1" />
-        <arg name="speckle_range" value="4" />
-        <arg name="speckle_size" value="1000" />
-        <arg name="prefilter_size" value="147" />
-        <arg name="prefilter_cap" value="7" />
-        <arg name="p1" value="200"/>
-        <arg name="p2" value="400"/>
-        <arg name="interp" value="false" />
 
         <!-- maximum depth value (m) -->
         <!-- reduce this if RTabMap is showing flat image in back of 3D -->
