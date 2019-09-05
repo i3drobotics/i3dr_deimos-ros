@@ -6,6 +6,7 @@ Copyright (c) 2019, I3D Robotics Ltd.
 <robot name="deimos" 
     xmlns:xacro="http://ros.org/wiki/xacro">
 
+    <xacro:arg name="camera_name" default="deimos"/>
     <!--<link name="odom"/>-->
 <!--
     <xacro:include filename="$(find i3dr_stereo_camera)/urdf/i3dr_stereo_camera.urdf.xacro" />
@@ -14,7 +15,7 @@ Copyright (c) 2019, I3D Robotics Ltd.
 -->
 
     <xacro:include filename="$(find i3dr_deimos)/urdf/deimos.urdf.xacro" />
-    <xacro:deimos_camera camera_name="deimos" en_mesh="true" en_imu="true"/>
+    <xacro:deimos_camera camera_name="$(arg camera_name)" en_mesh="true" en_imu="true"/>
     <!--<joint name="world_imu_joint" type="floating">
         <parent link="deimos_imu_link"/>
         <child link="odom"/>
