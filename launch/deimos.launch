@@ -11,12 +11,12 @@
     <arg name="stereo_match" default="true"/>
     
     <!-- this should not change as it is the namespace of frames in the urdf-->
-    <arg name="urdf_namespace" value="deimos"/>
+    <arg name="camera_model" default="$(arg camera_namespace)"/>
   
     <!-- SETUP ROBOT MODEL -->
-    <param name="$(arg urdf_namespace)_robot_description" command="$(find xacro)/xacro '$(find i3dr_deimos)/urdf/deimos_scene.urdf.xacro'" />
+    <param name="$(arg camera_model)_robot_description" command="$(find xacro)/xacro '$(find i3dr_deimos)/urdf/deimos_scene.urdf.xacro'" />
     <node name="robot_state_publisher_deimos" pkg="robot_state_publisher" type="state_publisher">
-        <remap from="robot_description" to="$(arg urdf_namespace)_robot_description"/>
+        <remap from="robot_description" to="$(arg camera_model)_robot_description"/>
     </node>
 
     <!-- STEREO CAPTURE -->
@@ -24,9 +24,9 @@
         <arg name="camera_namespace" value="$(arg camera_namespace)"/>
         <arg name="device" value="/dev/video0"/>
         <arg name="exposure" value="5000" />
-        <arg name="frame_id" value="$(arg urdf_namespace)_depth_optical_frame" />
-        <arg name="cameraLeft_info_url"  default="file://$(find i3dr_deimos)/calibration/$(arg camera_namespace)_left.yaml" />
-        <arg name="cameraRight_info_url" default="file://$(find i3dr_deimos)/calibration/$(arg camera_namespace)_right.yaml" />
+        <arg name="frame_id" value="$(arg camera_model)_depth_optical_frame" />
+        <arg name="cameraLeft_info_url"  default="file://$(find i3dr_deimos)/calibration/deimos_left.yaml" />
+        <arg name="cameraRight_info_url" default="file://$(find i3dr_deimos)/calibration/deimos_right.yaml" />
     </include>
 
     <!-- STEREO CALIBRATION -->
@@ -56,7 +56,8 @@
 
         <arg name="gui" value="false"/>
         <arg name="camera_namespace" value="$(arg camera_namespace)"/>
-        <arg name="frame_id" value="$(arg urdf_namespace)_depth_optical_frame" />
+        <arg name="frame_id" value="$(arg camera_model)_depth_optical_frame" />
+        <arg name="split_laser" value="false" />
     </include>
 
     <!-- DISPLAY -->
