@@ -2,15 +2,22 @@
 <!--XML-->
 <launch>
     <!-- SETUP ARGUMENTS -->
+    <!-- algorithm 0: OpenCV block -->
+    <!-- algorithm 1: OpenCV SGBM -->
+    <!-- algorithm 2: I3DR SGM -->
+    <arg name="stereo_algorithm" default="0" />
     <!-- enable/disable rviz -->
     <arg name="rviz" default="false" />
     <!-- enable/disable calibration -->
     <arg name="calibrate" default="false"/>
     <!-- namespace for camera -->
     <arg name="camera_namespace" default="deimos"/>
+    <!-- enable/disable stereo matching (3D generation) -->
     <arg name="stereo_match" default="true"/>
-    <arg name="cameraLeft_info_url"  default="file://$(find i3dr_deimos)/calibration/deimos_left.yaml" />
-    <arg name="cameraRight_info_url" default="file://$(find i3dr_deimos)/calibration/deimos_right.yaml" />
+
+    <!-- camera calibration files -->
+    <arg name="cameraLeft_info_url"  default="file://$(find i3dr_deimos)/calibration/ideal/deimos_left.yaml" />
+    <arg name="cameraRight_info_url" default="file://$(find i3dr_deimos)/calibration/ideal/deimos_right.yaml" />
     
     <!-- this should not change as it is the namespace of frames in the urdf-->
     <arg name="camera_model" default="$(arg camera_namespace)"/>
@@ -26,7 +33,7 @@
     <include file="$(find i3dr_deimos)/launch/deimos_capture.launch">
         <arg name="camera_namespace" value="$(arg camera_namespace)"/>
         <arg name="device" value="/dev/video0"/>
-        <arg name="exposure" value="5000" />
+        <arg name="exposure" value="8000" />
         <arg name="frame_id" value="$(arg urdf_namespace)_depth_optical_frame" />
         <arg name="cameraLeft_info_url"  value="$(arg cameraLeft_info_url)" />
         <arg name="cameraRight_info_url" value="$(arg cameraRight_info_url)" />
@@ -50,17 +57,24 @@
         <!-- http://wiki.ros.org/stereo_image_proc/Tutorials/ChoosingGoodStereoParameters -->
         <!-- algorithm 0: OpenCV block -->
         <!-- algorithm 1: OpenCV SGBM -->
-        <!-- algorithm 2: JR SGM -->
-        <arg name="stereo_algorithm" value="0" />
+        <!-- algorithm 2: I3DR SGM -->
+        <arg name="stereo_algorithm" value="$(arg stereo_algorithm)" />
 
         <!-- maximum depth value (m) -->
-        <!-- reduce this if RTabMap is showing flat image in back of 3D -->
-        <arg name="depth_max" default="100" />
+        <!-- noise is high in Deimos above 2.5m -->
+        <arg name="depth_max" value="6" />
 
         <arg name="gui" value="false"/>
         <arg name="camera_namespace" value="$(arg camera_namespace)"/>
         <arg name="frame_id" value="$(arg urdf_namespace)_depth_optical_frame" />
         <arg name="split_laser" value="false" />
+
+        <arg if="$(eval stereo_algorithm == 0)" name="min_disparity" value="0" />
+        <arg if="$(eval stereo_algorithm == 0)" name="disparity_range" value="80" />
+        <arg if="$(eval stereo_algorithm == 1)" name="min_disparity" value="0" />
+        <arg if="$(eval stereo_algorithm == 1)" name="disparity_range" value="80" />
+        <arg if="$(eval stereo_algorithm == 2)" name="min_disparity" value="500" />
+        <arg if="$(eval stereo_algorithm == 2)" name="disparity_range" value="530" />
     </include>
 
     <!-- DISPLAY -->
