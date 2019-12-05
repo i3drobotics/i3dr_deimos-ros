@@ -7,6 +7,7 @@ Panels:
         - /Global Options1
         - /Status1
         - /TF1/Frames1
+        - /PointCloud21
       Splitter Ratio: 0.5
     Tree Height: 379
   - Class: rviz/Selection
@@ -90,6 +91,10 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        deimos_imu_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         deimos_mount_point_1:
           Alpha: 1
           Show Axes: false
@@ -127,6 +132,8 @@ Visualization Manager:
           Value: false
         deimos_depth_optical_frame:
           Value: true
+        deimos_imu_link:
+          Value: true
         deimos_mount_point_1:
           Value: false
         deimos_mount_point_2:
@@ -148,6 +155,8 @@ Visualization Manager:
             deimos_cameraRight:
               deimos_cameraRight_optical:
                 {}
+          deimos_imu_link:
+            {}
           deimos_mount_point_1:
             {}
           deimos_mount_point_2:
@@ -191,7 +200,7 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.00999999978
+      Size (m): 0.0299999993
       Style: Points
       Topic: /deimos/points2
       Unreliable: false
@@ -247,25 +256,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 0.467012018
+      Distance: 6.20057058
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.0740321502
-        Y: 0.218406707
-        Z: 0.163755581
+        X: -0.102035649
+        Y: -3.55133343
+        Z: -0.219979376
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.350201577
+      Pitch: 0.364796668
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.35039532
+      Yaw: 0.35539937
     Saved: ~
 Window Geometry:
   Displays:
