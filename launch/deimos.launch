@@ -5,7 +5,7 @@
     <!-- algorithm 0: OpenCV block -->
     <!-- algorithm 1: OpenCV SGBM -->
     <!-- algorithm 2: I3DR SGM -->
-    <arg name="stereo_algorithm" default="0" />
+    <arg name="stereo_algorithm" default="2" />
     <!-- enable/disable rviz -->
     <arg name="rviz" default="false" />
     <!-- enable/disable calibration -->
@@ -14,10 +14,11 @@
     <arg name="camera_namespace" default="deimos"/>
     <!-- enable/disable stereo matching (3D generation) -->
     <arg name="stereo_match" default="true"/>
+    <arg name="camera_serial" default="6465696d6f7366"/>
 
     <!-- camera calibration files -->
-    <arg name="cameraLeft_info_url"  default="file://$(find i3dr_deimos)/calibration/ideal/deimos_left.yaml" />
-    <arg name="cameraRight_info_url" default="file://$(find i3dr_deimos)/calibration/ideal/deimos_right.yaml" />
+    <arg name="cameraLeft_info_url"  default="file://$(find i3dr_deimos)/calibration/$(arg camera_serial)/deimos_left.yaml" />
+    <arg name="cameraRight_info_url" default="file://$(find i3dr_deimos)/calibration/$(arg camera_serial)/deimos_right.yaml" />
     
     <!-- this should not change as it is the namespace of frames in the urdf-->
     <arg name="camera_model" default="$(arg camera_namespace)"/>

@@ -6,7 +6,9 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /RobotModel1/Status1
         - /TF1/Frames1
+        - /PointCloud21
       Splitter Ratio: 0.5
     Tree Height: 296
   - Class: rviz/Selection
@@ -61,53 +63,53 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        deimos_base_link:
+        i3dr_stereo_base_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        deimos_cameraLeft:
+        i3dr_stereo_cameraLeft:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        deimos_cameraLeft_optical:
+        i3dr_stereo_cameraLeft_optical:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        deimos_cameraRight:
+        i3dr_stereo_cameraRight:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        deimos_cameraRight_optical:
+        i3dr_stereo_cameraRight_optical:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        deimos_center:
+        i3dr_stereo_center:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        deimos_depth_optical_frame:
+        i3dr_stereo_depth_optical_frame:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        deimos_imu_link:
+        i3dr_stereo_imu_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        deimos_mount_point_1:
+        i3dr_stereo_mount_point_1:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        deimos_mount_point_2:
+        i3dr_stereo_mount_point_2:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        deimos_probe_mount:
+        i3dr_stereo_probe_mount:
           Alpha: 1
           Show Axes: false
           Show Trail: false
       Name: RobotModel
-      Robot Description: deimos_robot_description
+      Robot Description: i3dr_stereo_description
       TF Prefix: ""
       Update Interval: 0
       Value: true
@@ -117,56 +119,56 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        deimos_base_link:
-          Value: false
-        deimos_cameraLeft:
-          Value: false
-        deimos_cameraLeft_optical:
-          Value: false
-        deimos_cameraRight:
-          Value: false
-        deimos_cameraRight_optical:
-          Value: false
-        deimos_center:
-          Value: false
-        deimos_depth_optical_frame:
+        i3dr_stereo_base_link:
           Value: true
-        deimos_imu_link:
+        i3dr_stereo_cameraLeft:
           Value: true
-        deimos_mount_point_1:
-          Value: false
-        deimos_mount_point_2:
-          Value: false
-        deimos_probe_mount:
-          Value: false
+        i3dr_stereo_cameraLeft_optical:
+          Value: true
+        i3dr_stereo_cameraRight:
+          Value: true
+        i3dr_stereo_cameraRight_optical:
+          Value: true
+        i3dr_stereo_center:
+          Value: true
+        i3dr_stereo_depth_optical_frame:
+          Value: true
+        i3dr_stereo_imu_link:
+          Value: true
+        i3dr_stereo_mount_point_1:
+          Value: true
+        i3dr_stereo_mount_point_2:
+          Value: true
+        i3dr_stereo_probe_mount:
+          Value: true
       Marker Scale: 0.300000012
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        deimos_base_link:
-          deimos_center:
-            deimos_cameraLeft:
-              deimos_cameraLeft_optical:
-                deimos_depth_optical_frame:
+        i3dr_stereo_base_link:
+          i3dr_stereo_center:
+            i3dr_stereo_cameraLeft:
+              i3dr_stereo_cameraLeft_optical:
+                i3dr_stereo_depth_optical_frame:
                   {}
-            deimos_cameraRight:
-              deimos_cameraRight_optical:
+            i3dr_stereo_cameraRight:
+              i3dr_stereo_cameraRight_optical:
                 {}
-          deimos_imu_link:
+          i3dr_stereo_imu_link:
             {}
-          deimos_mount_point_1:
+          i3dr_stereo_mount_point_1:
             {}
-          deimos_mount_point_2:
+          i3dr_stereo_mount_point_2:
             {}
-          deimos_probe_mount:
+          i3dr_stereo_probe_mount:
             {}
       Update Interval: 0
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /deimos/left/image_rect
+      Image Topic: /i3dr_stereo/left/image_rect
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -201,14 +203,14 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.0299999993
       Style: Points
-      Topic: /deimos/points2
+      Topic: /i3dr_stereo/points2
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /deimos/depth
+      Image Topic: /i3dr_stereo/depth
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -220,7 +222,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /deimos/right/image_rect
+      Image Topic: /i3dr_stereo/right/image_rect
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -232,7 +234,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: false
-      Image Topic: /deimos/image_raw
+      Image Topic: /i3dr_stereo/image_raw
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -246,7 +248,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: deimos_base_link
+    Fixed Frame: i3dr_stereo_base_link
     Frame Rate: 30
   Name: root
   Tools:
@@ -267,25 +269,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 6.20057058
+      Distance: 7.77799606
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.102035649
-        Y: -3.55133343
-        Z: -0.219979376
+        X: -0.422435641
+        Y: -3.33778882
+        Z: -0.711777806
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.329796612
+      Pitch: 0.454796493
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.43540061
+      Yaw: 1.34540069
     Saved: ~
 Window Geometry:
   Depth:
