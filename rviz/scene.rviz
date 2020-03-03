@@ -5,7 +5,8 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /Status1
+        - /RobotModel1
+        - /RobotModel1/Status1
         - /TF1/Frames1
       Splitter Ratio: 0.5
     Tree Height: 296
@@ -94,6 +95,10 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        deimos_mount_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         deimos_mount_point_1:
           Alpha: 1
           Show Axes: false
@@ -118,50 +123,56 @@ Visualization Manager:
       Frames:
         All Enabled: false
         deimos_base_link:
-          Value: false
+          Value: true
         deimos_cameraLeft:
-          Value: false
+          Value: true
         deimos_cameraLeft_optical:
-          Value: false
+          Value: true
         deimos_cameraRight:
-          Value: false
+          Value: true
         deimos_cameraRight_optical:
-          Value: false
+          Value: true
         deimos_center:
-          Value: false
+          Value: true
         deimos_depth_optical_frame:
           Value: true
         deimos_imu_link:
           Value: true
+        deimos_mount_base_link:
+          Value: true
         deimos_mount_point_1:
-          Value: false
+          Value: true
         deimos_mount_point_2:
-          Value: false
+          Value: true
         deimos_probe_mount:
-          Value: false
+          Value: true
+        odom:
+          Value: true
       Marker Scale: 0.300000012
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        deimos_base_link:
-          deimos_center:
-            deimos_cameraLeft:
-              deimos_cameraLeft_optical:
-                deimos_depth_optical_frame:
-                  {}
-            deimos_cameraRight:
-              deimos_cameraRight_optical:
+        odom:
+          deimos_base_link:
+            deimos_imu_link:
+              {}
+            deimos_mount_base_link:
+              deimos_center:
+                deimos_cameraLeft:
+                  deimos_cameraLeft_optical:
+                    deimos_depth_optical_frame:
+                      {}
+                deimos_cameraRight:
+                  deimos_cameraRight_optical:
+                    {}
+              deimos_mount_point_1:
                 {}
-          deimos_imu_link:
-            {}
-          deimos_mount_point_1:
-            {}
-          deimos_mount_point_2:
-            {}
-          deimos_probe_mount:
-            {}
+              deimos_mount_point_2:
+                {}
+              deimos_probe_mount:
+                {}
       Update Interval: 0
       Value: true
     - Class: rviz/Image
@@ -242,11 +253,20 @@ Visualization Manager:
       Transport Hint: raw
       Unreliable: false
       Value: false
+    - Alpha: 1
+      Class: rviz_plugin_tutorials/Imu
+      Color: 204; 51; 204
+      Enabled: false
+      History Length: 1
+      Name: Imu
+      Topic: /deimos/imu
+      Unreliable: false
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: deimos_base_link
+    Fixed Frame: odom
     Frame Rate: 30
   Name: root
   Tools:
@@ -267,25 +287,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 6.20057058
+      Distance: 1.36181033
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.102035649
-        Y: -3.55133343
-        Z: -0.219979376
+        X: 0.397940814
+        Y: 0.733098626
+        Z: -0.431232661
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.329796612
+      Pitch: 0.534796476
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.43540061
+      Yaw: 4.10857916
     Saved: ~
 Window Geometry:
   Depth:
