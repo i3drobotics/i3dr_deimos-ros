@@ -5,13 +5,13 @@
     <!-- algorithm 0: OpenCV block -->
     <!-- algorithm 1: OpenCV SGBM -->
     <!-- algorithm 2: I3DR SGM -->
-    <arg name="stereo_algorithm" default="2" />
+    <arg name="stereo_algorithm" default="0" />
     <!-- enable/disable rviz -->
     <arg name="rviz" default="false" />
     <!-- enable/disable calibration -->
     <arg name="calibrate" default="false"/>
     <!-- namespace for camera -->
-    <arg name="camera_namespace" default="i3dr_stereo"/>
+    <arg name="camera_namespace" default="i3dr_deimos"/>
     <!-- enable/disable stereo matching (3D generation) -->
     <arg name="stereo_match" default="true"/>
     <arg name="camera_serial" default="6465696d6f7366"/>
