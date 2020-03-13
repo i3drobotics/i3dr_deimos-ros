@@ -18,6 +18,7 @@
     <arg name="imu" default="true" />
     <arg name="map" default="false" />
     <arg name="depth_max" default="100" />
+    <arg name="gui" default="true" />
 
     <!-- camera calibration files -->
     <arg name="cameraLeft_info_url"  default="file://$(find i3dr_deimos)/calibration/$(arg camera_serial)/deimos_left.yaml" />
@@ -68,7 +69,6 @@
         <!-- noise is high in Deimos above 2.5m -->
         <arg name="depth_max" value="$(arg depth_max)" />
 
-        <arg name="gui" value="false"/>
         <arg name="camera_namespace" value="$(arg camera_namespace)"/>
         <arg name="frame_id" value="$(arg urdf_namespace)_depth_optical_frame" />
         <arg name="split_laser" value="false" />
@@ -112,5 +112,6 @@
         <node if="$(arg rviz)" pkg="rviz" type="rviz" name="rivz" 
             args="-d $(find i3dr_deimos)/rviz/scene.rviz"/>
     </group>
+    <node if="$(arg gui)" pkg="i3dr_stereo_camera" type="stereo_gui" name="$(anon stereo_gui)" ns="$(arg camera_namespace)" output="screen"/>
 
 </launch>
