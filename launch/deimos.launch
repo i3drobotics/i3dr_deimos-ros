@@ -19,6 +19,7 @@
     <arg name="map" default="false" />
     <arg name="depth_max" default="100" />
     <arg name="gui" default="true" />
+    <arg name="cropByDisp" default="false" />
 
     <!-- camera calibration files -->
     <arg name="cameraLeft_info_url"  default="file://$(find i3dr_deimos)/calibration/$(arg camera_serial)/deimos_left.yaml" />
@@ -68,6 +69,7 @@
         <!-- maximum depth value (m) -->
         <!-- noise is high in Deimos above 2.5m -->
         <arg name="depth_max" value="$(arg depth_max)" />
+        <!--<arg name="depth_min" value="0.1" />-->
 
         <arg name="camera_namespace" value="$(arg camera_namespace)"/>
         <arg name="frame_id" value="$(arg urdf_namespace)_depth_optical_frame" />
@@ -79,6 +81,8 @@
         <arg if="$(eval stereo_algorithm == 1)" name="disparity_range" value="80" />
         <arg if="$(eval stereo_algorithm == 2)" name="min_disparity" value="500" />
         <arg if="$(eval stereo_algorithm == 2)" name="disparity_range" value="530" />
+        <arg if="$(eval stereo_algorithm == 2)" name="prefilter_cap" value="5" />
+        <arg if="$(eval stereo_algorithm == 2)" name="interp" value="false"/>
     </include>
 
     <node if="$(arg imu)" name="$(arg camera_namespace)_imu_filter" pkg="imu_filter_madgwick" type="imu_filter_node" output="screen">
@@ -88,16 +92,19 @@
         <param name="publish_tf" type="bool" value="$(eval arg('map')==0)" />
         <param name="world_frame" type="string" value="nwu" />
     </node>
+    
+    <arg if="$(eval arg('cropByDisp'))" name="rgb_topic" default="/$(arg camera_namespace)/left/image_rect_disp_cropped"/>
+    <arg unless="$(eval arg('cropByDisp'))" name="rgb_topic" default="/$(arg camera_namespace)/left/image_rect"/>
 
     <group if="$(arg map)">
         <arg name="map_frame_id" default="scan" />
         <arg name="map_resolution" default="0.001"/>
         <include if="$(arg map)" file="$(find i3dr_rtabmap)/launch/standalone_rtabmap.launch">
+            <arg name="rgb_topic" value="$(arg rgb_topic)"/>
             <arg name="camera_en" value="false"/>
             <arg name="camera_namespace" value="$(arg camera_namespace)"/>
             <arg name="camera_model" value="$(arg camera_model)"/>
             <arg name="urdf_namespace" value="$(arg urdf_namespace)"/>
-            <arg name="split_laser" value="false"/>
             <arg name="rviz" value="$(arg rviz)" />
             <arg name="map_frame_id" value="$(arg map_frame_id)"/>
             <arg name="grid_size" value="$(arg map_resolution)" />
