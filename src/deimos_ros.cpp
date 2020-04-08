@@ -25,7 +25,6 @@ IMUDATAINPUT_TypeDef lIMUInput;
 
 deimosCamera::deimosCamera(ros::NodeHandle _comm_nh, ros::NodeHandle _param_nh) : node(_comm_nh), pnode(_param_nh), it(_comm_nh), cam(0)
 {
-
 	/* default config values */
 	width = 752;
 	height = 480;
@@ -34,7 +33,7 @@ deimosCamera::deimosCamera(ros::NodeHandle _comm_nh, ros::NodeHandle _param_nh) 
 	frames_to_skip = 0;
 	device = "/dev/video0";
 	frame = "deimos_depth_optical_frame";
-	frameIMU = "deimos_imu_link";
+	frameIMU = "deimos_base_link";
 	frameImageLeft = frame;
 	frameImageRight = frame;
 	frameCameraInfoLeft = frame;
@@ -57,6 +56,7 @@ deimosCamera::deimosCamera(ros::NodeHandle _comm_nh, ros::NodeHandle _param_nh) 
 	pnode.getParam("width", width);
 	pnode.getParam("height", height);
 	pnode.getParam("frame_id", frame);
+	pnode.getParam("imu_frame_id", frameIMU);
 
 	frameImageLeft = frame;
 	frameImageRight = frame;
@@ -195,11 +195,13 @@ deimosCamera::deimosCamera(ros::NodeHandle _comm_nh, ros::NodeHandle _param_nh) 
 		exposure_sub = node.subscribe("set_exposure", 1, &deimosCamera::callBackExposure, this);
 		brightness_sub = node.subscribe("set_brightness", 1, &deimosCamera::callBackBrightness, this);
 
-		IMU_pub = node.advertise<sensor_msgs::Imu>("imu", 1, true);
+		IMU_pub = node.advertise<sensor_msgs::Imu>("imu/data_raw", 1, true);
 		IMU_inclination_pub = node.advertise<geometry_msgs::Point>("get_inclination", 1, true);
 		IMU_thread = boost::thread(boost::bind(&deimosCamera::IMU_enable, this));
 
+#if IMU_ODOM_EN
 		IMU_odom_pub = node.advertise<nav_msgs::Odometry>("odom", 1);
+#endif
 	}
 }
 

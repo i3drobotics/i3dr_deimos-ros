@@ -13,6 +13,7 @@
             <param name="height" type="int" value="480" />
             <param name="fps" type="int" value="$(arg fps)" />
             <param name="frame_id" type="string" value="$(arg frame_id)"/>
+            <param name="imu_frame_id" type="string" value="$(arg camera_namespace)_base_link"/>
             <param name="device" type="string" value="$(arg device)" />
             <param name="exposureValue" type="int" value="$(arg exposure)" />
             <param name="cameraLeft_info_url" type="string" value="$(arg cameraLeft_info_url)" />

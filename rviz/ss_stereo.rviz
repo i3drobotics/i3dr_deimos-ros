@@ -5,9 +5,12 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /Status1
+        - /RobotModel1/Status1
         - /TF1/Frames1
+        - /PointCloud21
       Splitter Ratio: 0.5
-    Tree Height: 452
+    Tree Height: 296
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -53,49 +56,90 @@ Visualization Manager:
     - Alpha: 1
       Class: rviz/RobotModel
       Collision Enabled: false
-      Enabled: false
+      Enabled: true
       Links:
         All Links Enabled: true
         Expand Joint Details: false
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
+        i3dr_stereo_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        i3dr_stereo_cameraLeft:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        i3dr_stereo_cameraLeft_optical:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        i3dr_stereo_cameraRight:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        i3dr_stereo_cameraRight_optical:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        i3dr_stereo_center:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        i3dr_stereo_depth_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        i3dr_stereo_imu_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        i3dr_stereo_mount_point_1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        i3dr_stereo_mount_point_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        i3dr_stereo_probe_mount:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
       Name: RobotModel
-      Robot Description: i3dr_deimos_robot_description
+      Robot Description: i3dr_stereo_description
       TF Prefix: ""
       Update Interval: 0
-      Value: false
+      Value: true
       Visual Enabled: true
     - Class: rviz/TF
       Enabled: true
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        i3dr_deimos_base_link:
+        i3dr_stereo_base_link:
           Value: true
-        i3dr_deimos_cameraLeft:
+        i3dr_stereo_cameraLeft:
           Value: true
-        i3dr_deimos_cameraLeft_optical:
+        i3dr_stereo_cameraLeft_optical:
           Value: true
-        i3dr_deimos_cameraRight:
+        i3dr_stereo_cameraRight:
           Value: true
-        i3dr_deimos_cameraRight_optical:
+        i3dr_stereo_cameraRight_optical:
           Value: true
-        i3dr_deimos_center:
+        i3dr_stereo_center:
           Value: true
-        i3dr_deimos_depth_optical_frame:
+        i3dr_stereo_depth_optical_frame:
           Value: true
-        i3dr_deimos_imu_link:
+        i3dr_stereo_imu_link:
           Value: true
-        i3dr_deimos_mount_base_link:
+        i3dr_stereo_mount_point_1:
           Value: true
-        i3dr_deimos_mount_point_1:
+        i3dr_stereo_mount_point_2:
           Value: true
-        i3dr_deimos_mount_point_2:
-          Value: true
-        i3dr_deimos_probe_mount:
-          Value: true
-        odom:
+        i3dr_stereo_probe_mount:
           Value: true
       Marker Scale: 0.300000012
       Name: TF
@@ -103,30 +147,28 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        odom:
-          i3dr_deimos_base_link:
-            i3dr_deimos_imu_link:
-              {}
-            i3dr_deimos_mount_base_link:
-              i3dr_deimos_center:
-                i3dr_deimos_cameraLeft:
-                  i3dr_deimos_cameraLeft_optical:
-                    i3dr_deimos_depth_optical_frame:
-                      {}
-                i3dr_deimos_cameraRight:
-                  i3dr_deimos_cameraRight_optical:
-                    {}
-              i3dr_deimos_mount_point_1:
+        i3dr_stereo_base_link:
+          i3dr_stereo_center:
+            i3dr_stereo_cameraLeft:
+              i3dr_stereo_cameraLeft_optical:
+                i3dr_stereo_depth_optical_frame:
+                  {}
+            i3dr_stereo_cameraRight:
+              i3dr_stereo_cameraRight_optical:
                 {}
-              i3dr_deimos_mount_point_2:
-                {}
-              i3dr_deimos_probe_mount:
-                {}
+          i3dr_stereo_imu_link:
+            {}
+          i3dr_stereo_mount_point_1:
+            {}
+          i3dr_stereo_mount_point_2:
+            {}
+          i3dr_stereo_probe_mount:
+            {}
       Update Interval: 0
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /i3dr_deimos/left/image_rect
+      Image Topic: /i3dr_stereo/left/image_rect
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -161,14 +203,14 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.0299999993
       Style: Points
-      Topic: /i3dr_deimos/points2
+      Topic: /i3dr_stereo/points2
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /i3dr_deimos/depth
+      Image Topic: /i3dr_stereo/depth
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -180,7 +222,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /i3dr_deimos/right/image_rect
+      Image Topic: /i3dr_stereo/right/image_rect
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -192,7 +234,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: false
-      Image Topic: /deimos/image_raw
+      Image Topic: /i3dr_stereo/image_raw
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -202,20 +244,11 @@ Visualization Manager:
       Transport Hint: raw
       Unreliable: false
       Value: false
-    - Alpha: 1
-      Class: rviz_plugin_tutorials/Imu
-      Color: 204; 51; 204
-      Enabled: false
-      History Length: 1
-      Name: Imu
-      Topic: /deimos/imu
-      Unreliable: false
-      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: odom
+    Fixed Frame: i3dr_stereo_base_link
     Frame Rate: 30
   Name: root
   Tools:
@@ -236,25 +269,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 0.742729664
+      Distance: 7.77799606
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.213120043
-        Y: 0.566500306
-        Z: -0.265648454
+        X: -0.422435641
+        Y: -3.33778882
+        Z: -0.711777806
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.464795768
+      Pitch: 0.454796493
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.1185503
+      Yaw: 1.34540069
     Saved: ~
 Window Geometry:
   Depth:
@@ -266,7 +299,7 @@ Window Geometry:
   Hide Right Dock: false
   Left:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000001aa00000253fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006100fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000016b00000253000000d700fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f000002c4fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a005600690065007700730000000028000002c4000000ad00fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b20000000000000000000000020000073f0000013dfc0100000007fb0000000a0049006d0061006700650100000000000003820000000000000000fb00000008004c0065006600740100000000000002db0000004e00fffffffb0000000600520061007700000002e1000001aa0000004f00fffffffb0000000a0044006500700074006801000002e1000001aa0000005d00fffffffb0000000a005200690067006800740100000491000002ae0000005700fffffffb0000000a0049006d00610067006500000000000000073f0000000000000000fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073f0000003efc0100000002fb0000000800540069006d006501000000000000073f0000030000fffffffb0000000800540069006d006501000000000000045000000000000000000000058f0000025300000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001aa00000253fc0200000009fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006100fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000016b000001b7000000d700fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a004400650070007400680100000328000000960000001600ffffff000000010000010f000002c4fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a005600690065007700730000000028000002c4000000ad00fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b20000000000000000000000020000073f0000013dfc0100000006fb0000000a0049006d0061006700650100000000000003820000000000000000fb00000008004c0065006600740100000000000003ba0000004e00fffffffb0000000600520061007700000002e1000001aa0000004f00fffffffb0000000a0052006900670068007401000003c00000037f0000005700fffffffb0000000a0049006d00610067006500000000000000073f0000000000000000fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073f0000003efc0100000002fb0000000800540069006d006501000000000000073f0000030000fffffffb0000000800540069006d006501000000000000045000000000000000000000058f0000025300000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Raw:
     collapsed: false
   Right:
@@ -280,5 +313,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1855
-  X: 1985
+  X: 65
   Y: 24

@@ -32,6 +32,8 @@ Edited: 2019, Marti Morta Garriga, Wood.
 
     <link name="${camera_name}_base_link" />
 
+    <link name="${camera_name}_mount_base_link" />
+
     <xacro:if value="${(en_imu == 'true')}">
         <link name="${camera_name}_imu_link"/>
     </xacro:if>
@@ -64,6 +66,26 @@ Edited: 2019, Marti Morta Garriga, Wood.
             </xacro:if>
         </visual>
     </link>
+
+    <xacro:if value="${(en_imu == 'true')}">
+        <joint name="${camera_name}_imu_joint" type="fixed">
+            <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}" />
+            <parent link="${camera_name}_base_link" />
+            <child link="${camera_name}_imu_link" />
+        </joint>
+        <joint name="${camera_name}_imu_mount_joint" type="fixed">
+            <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}" />
+            <parent link="${camera_name}_base_link" />
+            <child link="${camera_name}_mount_base_link" />
+        </joint>
+    </xacro:if>
+    <xacro:if value="${(en_imu == 'false')}">
+        <joint name="${camera_name}_imu_mount_joint" type="fixed">
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <parent link="${camera_name}_base_link" />
+            <child link="${camera_name}_mount_base_link" />
+        </joint>
+    </xacro:if>
 
     <joint name="${camera_name}_right_camera_joint" type="fixed">
         <parent link="${camera_name}_center"/>
@@ -98,35 +120,27 @@ Edited: 2019, Marti Morta Garriga, Wood.
     </joint>
 
     <joint name="${camera_name}_mount_center_joint" type="fixed">
-        <parent link="${camera_name}_base_link"/>
+        <parent link="${camera_name}_mount_base_link"/>
         <child link="${camera_name}_center"/>
         <origin xyz="0 0 0" rpy="0 0 ${-pi/2}" />
     </joint>
 
     <joint name="${camera_name}_probe_mount_joint" type="fixed">
-        <parent link="${camera_name}_base_link"/>
+        <parent link="${camera_name}_mount_base_link"/>
         <child link="${camera_name}_probe_mount"/>
         <origin xyz="${0} 0 ${0}" rpy="0 0 0" />
     </joint>
 
     <joint name="${camera_name}_mount_point_1_joint" type="fixed">
-        <parent link="${camera_name}_base_link"/>
+        <parent link="${camera_name}_mount_base_link"/>
         <child link="${camera_name}_mount_point_1"/>
         <origin xyz="${(0.03/2)-0.002} -0.007 ${-0.038/2}" rpy="0 0 0" />
     </joint>
     <joint name="${camera_name}_mount_point_2_joint" type="fixed">
-        <parent link="${camera_name}_base_link"/>
+        <parent link="${camera_name}_mount_base_link"/>
         <child link="${camera_name}_mount_point_2"/>
         <origin xyz="${(-0.03/2)-0.002} -0.007 ${-0.038/2}" rpy="0 0 0" />
     </joint>
-    <xacro:if value="${(en_imu == 'true')}">
-        <!-- Correct for IMU orientation, Z -> X -->
-        <joint name="${camera_name}_imu_joint" type="fixed">
-            <origin xyz="0 0 0" rpy="0 ${pi/2} 0" />
-            <parent link="${camera_name}_base_link" />
-            <child link="${camera_name}_imu_link" />
-        </joint>
-    </xacro:if>
 
     <xacro:macro name="optical_camera" params="name fov_rad:=^ sim_w:=^ sim_h:=^">
         <camera name="${name}">
