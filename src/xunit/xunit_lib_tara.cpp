@@ -781,14 +781,14 @@ BOOL ControlIMUCapture(IMUDATAINPUT_TypeDef *lIMUInput)
 
 	if(glIMUConfig.IMU_MODE == IMU_ACC_GYRO_DISABLE)
 	{
-		//printf("ControlIMUCapture: IMU Disabled, Enable using SetIMUConfig\r\n");
+		printf("ControlIMUCapture: IMU Disabled, Enable using SetIMUConfig\r\n");
 		return FALSE;
 	}
 
 	if((lIMUInput->IMU_UPDATE_MODE != IMU_CONT_UPDT_EN) &&
 			(lIMUInput->IMU_UPDATE_MODE != IMU_CONT_UPDT_DIS))
 	{
-		//printf("ControlIMUCapture: Write File Failed\r\n");
+		printf("ControlIMUCapture: Write File Failed\r\n");
 		return FALSE;
 	}
 
