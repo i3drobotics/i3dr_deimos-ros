@@ -14,6 +14,8 @@
     <arg name="camera_namespace" default="i3dr_deimos"/>
     <!-- enable/disable stereo matching (3D generation) -->
     <arg name="stereo_match" default="true"/>
+    <!-- enable/disable deimos is being captured on a different machine -->
+    <arg name="external_capture" default="false"/>
     <arg name="camera_serial" default="001022"/>
     <arg name="imu" default="true" />
     <arg name="map" default="false" />
@@ -37,7 +39,7 @@
     </node>
 
     <!-- STEREO CAPTURE -->
-    <include file="$(find i3dr_deimos)/launch/deimos_capture.launch">
+    <include unless="$(arg external_capture)" file="$(find i3dr_deimos)/launch/deimos_capture.launch">
         <arg name="camera_namespace" value="$(arg camera_namespace)"/>
         <arg name="device" value="/dev/video0"/>
         <arg name="exposure" value="50" />
