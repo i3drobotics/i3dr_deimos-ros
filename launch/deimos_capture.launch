@@ -1,12 +1,13 @@
 <launch>
     <!-- STEREO CAPTURE -->
-    <arg name="camera_namespace" default="deimos"/>
+    <arg name="camera_namespace" default="i3dr_deimos"/>
     <arg name="device" default="/dev/video0"/>
-    <arg name="exposure" default="1" />
+    <arg name="exposure" default="5000" />
     <arg name="fps" default="60" />
-    <arg name="frame_id" default="deimos_depth_optical_frame" />
-    <arg name="cameraLeft_info_url"  default="file://${ROS_HOME}/camera_info/deimos/deimos_left.yaml" />
-    <arg name="cameraRight_info_url" default="file://${ROS_HOME}/camera_info/deimos/deimos_right.yaml" />
+    <arg name="camera_serial" value="001022"/>
+    <arg name="frame_id" default="$(arg camera_namespace)_depth_optical_frame" />
+    <arg name="cameraLeft_info_url"  default="file://$(find i3dr_deimos)/calibration/$(arg camera_serial)/deimos_left.yaml" />
+    <arg name="cameraRight_info_url" default="file://$(find i3dr_deimos)/calibration/$(arg camera_serial)/deimos_right.yaml" />
     <group ns="$(arg camera_namespace)">
         <node pkg="i3dr_deimos" type="deimos_node" name="deimos" output="screen">
             <param name="width" type="int" value="752" />
