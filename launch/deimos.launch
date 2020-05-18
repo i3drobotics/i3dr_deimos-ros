@@ -14,10 +14,10 @@
     <arg name="camera_namespace" default="i3dr_deimos"/>
     <!-- enable/disable stereo matching (3D generation) -->
     <arg name="stereo_match" default="true"/>
-    <arg name="camera_serial" default="new"/>
+    <arg name="camera_serial" default="001022"/>
     <arg name="imu" default="true" />
     <arg name="map" default="false" />
-    <arg name="depth_max" default="100" />
+    <arg name="depth_max" default="2" />
     <arg name="gui" default="true" />
     <arg name="cropByDisp" default="false" />
 
@@ -30,7 +30,8 @@
     <arg name="urdf_namespace" default="$(arg camera_namespace)"/>
   
     <!-- SETUP ROBOT MODEL -->
-    <param name="$(arg urdf_namespace)_robot_description" command="$(find xacro)/xacro '$(find i3dr_deimos)/urdf/deimos_scene.urdf.xacro' en_imu:=$(arg imu) camera_name:=$(arg urdf_namespace)" />
+    <arg name="imu_urdf" default="false" />
+    <param name="$(arg urdf_namespace)_robot_description" command="$(find xacro)/xacro '$(find i3dr_deimos)/urdf/deimos_scene.urdf.xacro' en_imu:=$(arg imu_urdf) camera_name:=$(arg urdf_namespace)" />
     <node name="robot_state_publisher_deimos" pkg="robot_state_publisher" type="state_publisher">
         <remap from="robot_description" to="$(arg urdf_namespace)_robot_description"/>
     </node>
@@ -39,7 +40,7 @@
     <include file="$(find i3dr_deimos)/launch/deimos_capture.launch">
         <arg name="camera_namespace" value="$(arg camera_namespace)"/>
         <arg name="device" value="/dev/video0"/>
-        <arg name="exposure" value="4000" />
+        <arg name="exposure" value="50" />
         <arg name="frame_id" value="$(arg urdf_namespace)_depth_optical_frame" />
         <arg name="cameraLeft_info_url"  value="$(arg cameraLeft_info_url)" />
         <arg name="cameraRight_info_url" value="$(arg cameraRight_info_url)" />
@@ -75,8 +76,10 @@
         <arg name="frame_id" value="$(arg urdf_namespace)_depth_optical_frame" />
         <arg name="split_laser" value="false" />
 
+        <arg if="$(eval stereo_algorithm == 0)" name="correlation_window_size" value="31" />
         <arg if="$(eval stereo_algorithm == 0)" name="min_disparity" value="0" />
         <arg if="$(eval stereo_algorithm == 0)" name="disparity_range" value="80" />
+        <arg if="$(eval stereo_algorithm == 1)" name="correlation_window_size" value="31" />
         <arg if="$(eval stereo_algorithm == 1)" name="min_disparity" value="0" />
         <arg if="$(eval stereo_algorithm == 1)" name="disparity_range" value="80" />
         <arg if="$(eval stereo_algorithm == 2)" name="min_disparity" value="500" />
