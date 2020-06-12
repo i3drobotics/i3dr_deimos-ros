@@ -123,6 +123,7 @@ deimosCamera::deimosCamera(ros::NodeHandle _comm_nh, ros::NodeHandle _param_nh) 
 			printf("setting brightness : FAIL\n");
 		}
 
+		/*
 		if ((exposure_value > SEE3CAM_STEREO_EXPOSURE_MAX) || (exposure_value < SEE3CAM_STEREO_EXPOSURE_MIN))
 		{
 			if (checkFirmware(cam->MajorVersion, cam->MinorVersion1, cam->MinorVersion2, cam->MinorVersion3))
@@ -134,9 +135,14 @@ deimosCamera::deimosCamera(ros::NodeHandle _comm_nh, ros::NodeHandle _param_nh) 
 				exposure_value = 15000;
 			}
 		}
+		*/
 
-		returnValue = SetManualExposureValue_Stereo(exposure_value); // exposure time 15.6ms
-
+		if (exposure_value > 0){
+			cam->set_control(V4L2_CID_EXPOSURE_AUTO, 1);
+			returnValue = SetManualExposureValue_Stereo(exposure_value);
+		} else {
+			returnValue = cam->set_control(V4L2_CID_EXPOSURE_AUTO, 1); // auto exposure
+		}
 		if (false == returnValue)
 		{
 			printf("setting exposure : FAIL\n");
@@ -146,12 +152,6 @@ deimosCamera::deimosCamera(ros::NodeHandle _comm_nh, ros::NodeHandle _param_nh) 
 		if (false == returnValue)
 		{
 			printf("setting auto gain : FAIL\n");
-		}
-
-		returnValue = cam->set_control(V4L2_CID_EXPOSURE_AUTO, false); // auto exposure
-		if (false == returnValue)
-		{
-			printf("setting auto exposure : FAIL\n");
 		}
 
 		returnValue = cam->set_control(V4L2_CID_GAIN, 0); // brightness
@@ -209,7 +209,17 @@ void deimosCamera::callBackExposure(std_msgs::Float64 call_exposure_msg)
 {
 	DisableIMU();
 	exposure_value = (float)call_exposure_msg.data;
-	returnValue = SetManualExposureValue_Stereo(exposure_value);
+	if (exposure_value > 0){
+		cam->set_control(V4L2_CID_EXPOSURE_AUTO, 1);
+		returnValue = SetManualExposureValue_Stereo(exposure_value);
+	} else {
+		returnValue = cam->set_control(V4L2_CID_EXPOSURE_AUTO, 0); // auto exposure
+	}
+	if (false == returnValue)
+	{
+		printf("setting exposure : FAIL\n");
+	}
+
 	if (true == returnValue)
 	{
 		printf("setting exposure : SUCCESS\n");
@@ -218,6 +228,7 @@ void deimosCamera::callBackExposure(std_msgs::Float64 call_exposure_msg)
 	{
 		printf("setting exposure : FAIL\n");
 	}
+	
 
 	if (GetManualExposureValue_Stereo(&exposure_value) == true)
 	{

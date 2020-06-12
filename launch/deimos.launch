@@ -5,7 +5,7 @@
     <!-- algorithm 0: OpenCV block -->
     <!-- algorithm 1: OpenCV SGBM -->
     <!-- algorithm 2: I3DR SGM -->
-    <arg name="stereo_algorithm" default="0" />
+    <arg name="stereo_algorithm" default="2" />
     <!-- enable/disable rviz -->
     <arg name="rviz" default="false" />
     <!-- enable/disable calibration -->
@@ -14,14 +14,27 @@
     <arg name="camera_namespace" default="i3dr_deimos"/>
     <!-- enable/disable stereo matching (3D generation) -->
     <arg name="stereo_match" default="true"/>
-    <!-- enable/disable deimos is being captured on a different machine -->
-    <arg name="external_capture" default="false"/>
-    <arg name="camera_serial" default="001022"/>
+    <!-- set this to your camera_serial (this will be used to choose the right calibration files)-->
+    <arg name="camera_serial" default="001023"/>
     <arg name="imu" default="true" />
+    <!-- enable/disable mapping with rtabmap -->
     <arg name="map" default="false" />
-    <arg name="depth_max" default="2" />
-    <arg name="gui" default="true" />
+    <!-- maximum distance for depth map -->
+    <arg name="depth_max" default="5" />
+    <!-- maximum distance for point cloud -->
+    <arg name="z_max" default="5" />
+    <!-- enable/disable stereo gui (beta)-->
+    <arg name="gui" default="false" />
+
+    <!-- mapping settings -->
+    <!-- crop input image by disparity -->
     <arg name="cropByDisp" default="false" />
+    <!-- delete map database on start -->
+    <arg name="clearMapOnStart" default="true" />
+    <!-- path to rtabmap database -->
+    <arg name="database_path" default="~/.ros/rtabmap.db" />
+    <!-- localization mode for mapping (true: map, false: localise)-->
+    <arg name="localization" default="false" />
 
     <!-- camera calibration files -->
     <arg name="cameraLeft_info_url"  default="file://$(find i3dr_deimos)/calibration/$(arg camera_serial)/deimos_left.yaml" />
@@ -41,8 +54,10 @@
     <!-- STEREO CAPTURE -->
     <include unless="$(arg external_capture)" file="$(find i3dr_deimos)/launch/deimos_capture.launch">
         <arg name="camera_namespace" value="$(arg camera_namespace)"/>
+        <!-- choose which usb dev port the camera is attached to -->
         <arg name="device" value="/dev/video0"/>
-        <arg name="exposure" value="50" />
+        <!-- adjust the camera exposure -->
+        <arg name="exposure" value="5000" />
         <arg name="frame_id" value="$(arg urdf_namespace)_depth_optical_frame" />
         <arg name="cameraLeft_info_url"  value="$(arg cameraLeft_info_url)" />
         <arg name="cameraRight_info_url" value="$(arg cameraRight_info_url)" />
@@ -51,15 +66,13 @@
     <!-- STEREO CALIBRATION -->
     <include if="$(arg calibrate)" file="$(find i3dr_stereo_camera)/launch/stereo_calibration.launch">
         <arg name="camera_namespace" value="$(arg camera_namespace)"/>
-        <arg name="multi_board" value="true" />
+        <arg name="multi_board" value="false" />
         <arg name="grid_rows" value="8" />
     </include>
 
     <!-- STEREO MATCHER -->
     <include if="$(arg stereo_match)" file="$(find i3dr_stereo_camera)/launch/stereo_matcher.launch">
-        <arg name="use_i3dr_matcher" value="true"/>
-
-        <arg name="run_remote" value="false"/>
+        <arg name="cropByDisp" value="$(arg cropByDisp)"/>
 
         <!-- Matcher Parameters -->
         <!-- see link below for details on matcher parameters -->
@@ -69,21 +82,27 @@
         <!-- algorithm 2: I3DR SGM -->
         <arg name="stereo_algorithm" value="$(arg stereo_algorithm)" />
 
-        <!-- maximum depth value (m) -->
-        <!-- noise is high in Deimos above 2.5m -->
+        <!-- maximum distance for depth map -->
         <arg name="depth_max" value="$(arg depth_max)" />
-        <!--<arg name="depth_min" value="0.1" />-->
+        <!-- maximum distance for point cloud -->
+        <arg name="z_max" value="$(arg z_max)" />
+        <!-- minimum distance for depth map -->
+        <!--<arg name="depth_min" value="0" />-->
+        <!-- minimum distance for point cloud -->
+        <!--<arg name="z_min" value="0" />-->
 
         <arg name="camera_namespace" value="$(arg camera_namespace)"/>
         <arg name="frame_id" value="$(arg urdf_namespace)_depth_optical_frame" />
         <arg name="split_laser" value="false" />
 
-        <arg if="$(eval stereo_algorithm == 0)" name="correlation_window_size" value="31" />
+        <!-- tested good matcher parameters for deimos -->
+        <arg if="$(eval stereo_algorithm == 0)" name="correlation_window_size" value="13" />
         <arg if="$(eval stereo_algorithm == 0)" name="min_disparity" value="0" />
         <arg if="$(eval stereo_algorithm == 0)" name="disparity_range" value="80" />
-        <arg if="$(eval stereo_algorithm == 1)" name="correlation_window_size" value="31" />
+        <arg if="$(eval stereo_algorithm == 1)" name="correlation_window_size" value="13" />
         <arg if="$(eval stereo_algorithm == 1)" name="min_disparity" value="0" />
         <arg if="$(eval stereo_algorithm == 1)" name="disparity_range" value="80" />
+        <arg if="$(eval stereo_algorithm == 2)" name="correlation_window_size" value="5" />
         <arg if="$(eval stereo_algorithm == 2)" name="min_disparity" value="500" />
         <arg if="$(eval stereo_algorithm == 2)" name="disparity_range" value="530" />
         <arg if="$(eval stereo_algorithm == 2)" name="prefilter_cap" value="5" />
@@ -91,18 +110,23 @@
     </include>
 
     <node if="$(arg imu)" name="$(arg camera_namespace)_imu_filter" pkg="imu_filter_madgwick" type="imu_filter_node" output="screen">
+        <!-- no magnetometer on deimos -->
         <param name="use_mag" value="false"/>
+        <!-- publish imu data in camera namspace -->
         <remap from="/imu/data_raw" to="/$(arg camera_namespace)/imu/data_raw"/>
-        <!--<remap from="/imu/data" to="/imu/data"/>-->
+        <!-- only publish tf when mapping is off -->
         <param name="publish_tf" type="bool" value="$(eval arg('map')==0)" />
         <param name="world_frame" type="string" value="nwu" />
     </node>
     
+    <!-- use image cropped by disparity for mapping if enabled -->
     <arg if="$(eval arg('cropByDisp'))" name="rgb_topic" default="/$(arg camera_namespace)/left/image_rect_disp_cropped"/>
     <arg unless="$(eval arg('cropByDisp'))" name="rgb_topic" default="/$(arg camera_namespace)/left/image_rect"/>
 
     <group if="$(arg map)">
+        <!-- frame for map -->
         <arg name="map_frame_id" default="scan" />
+        <!-- map grid resolution -->
         <arg name="map_resolution" default="0.001"/>
         <include if="$(arg map)" file="$(find i3dr_rtabmap)/launch/standalone_rtabmap.launch">
             <arg name="rgb_topic" value="$(arg rgb_topic)"/>
@@ -117,13 +141,19 @@
             <arg name="gftt_min_dist" value="5"/>
             <arg name="max_depth" value="$(arg depth_max)"/>
             <arg name="use_compressed" value="false"/>
+            <arg name="clearMapOnStart" value="$(arg clearMapOnStart)"/>
+            <arg name="database_path" value="$(arg database_path)" />
+            <arg name="localization" value="$(arg localization)"/>
         </include>
     </group>
+
+    <!-- rviz to use when mapping is off (otherwise rviz is run from inside 'standalone_rtabmap') -->
     <group unless="$(arg map)">
-        <!-- run rviz with config file -->
         <node if="$(arg rviz)" pkg="rviz" type="rviz" name="rivz" 
             args="-d $(find i3dr_deimos)/rviz/scene.rviz"/>
     </group>
+
+    <!-- stereo camera gui (beta) -->
     <node if="$(arg gui)" pkg="i3dr_stereo_camera" type="stereo_gui" name="$(anon stereo_gui)" ns="$(arg camera_namespace)" output="screen"/>
 
 </launch>

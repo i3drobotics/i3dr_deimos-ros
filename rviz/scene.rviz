@@ -7,6 +7,7 @@ Panels:
         - /Global Options1
         - /TF1/Frames1
         - /PointCloud21
+        - /Right1
       Splitter Ratio: 0.5
     Tree Height: 452
   - Class: rviz/Selection
@@ -27,7 +28,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: Left
+    SyncSource: ""
 Toolbars:
   toolButtonStyle: 2
 Visualization Manager:
@@ -86,8 +87,6 @@ Visualization Manager:
           Value: true
         i3dr_deimos_depth_optical_frame:
           Value: true
-        i3dr_deimos_imu_link:
-          Value: true
         i3dr_deimos_mount_base_link:
           Value: true
         i3dr_deimos_mount_point_1:
@@ -96,33 +95,13 @@ Visualization Manager:
           Value: true
         i3dr_deimos_probe_mount:
           Value: true
-        odom:
-          Value: true
       Marker Scale: 0.300000012
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        odom:
-          i3dr_deimos_base_link:
-            i3dr_deimos_imu_link:
-              {}
-            i3dr_deimos_mount_base_link:
-              i3dr_deimos_center:
-                i3dr_deimos_cameraLeft:
-                  i3dr_deimos_cameraLeft_optical:
-                    i3dr_deimos_depth_optical_frame:
-                      {}
-                i3dr_deimos_cameraRight:
-                  i3dr_deimos_cameraRight_optical:
-                    {}
-              i3dr_deimos_mount_point_1:
-                {}
-              i3dr_deimos_mount_point_2:
-                {}
-              i3dr_deimos_probe_mount:
-                {}
+        {}
       Update Interval: 0
       Value: true
     - Class: rviz/Image
@@ -162,7 +141,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.0299999993
       Style: Points
-      Topic: /i3dr_deimos/points2_b
+      Topic: /i3dr_deimos/points2
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
