@@ -52,7 +52,7 @@
     </node>
 
     <!-- STEREO CAPTURE -->
-    <include unless="$(arg external_capture)" file="$(find i3dr_deimos)/launch/deimos_capture.launch">
+    <include file="$(find i3dr_deimos)/launch/deimos_capture.launch">
         <arg name="camera_namespace" value="$(arg camera_namespace)"/>
         <!-- choose which usb dev port the camera is attached to -->
         <arg name="device" value="/dev/video0"/>
