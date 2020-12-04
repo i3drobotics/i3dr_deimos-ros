@@ -116,7 +116,7 @@ Edited: 2019, Marti Morta Garriga, Wood.
     <joint name="${camera_name}_depth_optical_joint" type="fixed">
         <parent link="${camera_name}_cameraLeft_optical"/>
         <child link="${camera_name}_depth_optical_frame"/>
-        <origin xyz="0 0 0" rpy="0 ${-pi/2} ${pi/2}" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
     </joint>
 
     <joint name="${camera_name}_mount_center_joint" type="fixed">
