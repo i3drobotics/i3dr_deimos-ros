@@ -2,6 +2,14 @@ cmake_minimum_required(VERSION 2.8.3)
 set (CMAKE_CXX_STANDARD 11)
 project(i3dr_deimos)
 
+# Install udev rules for usb permission using 'install.sh' script
+set (udev_install_cmd "./udev/install.sh")
+message(STATUS "Running udev install command: ${udev_install_cmd}")
+execute_process(COMMAND ${udev_install_cmd}
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  OUTPUT_VARIABLE udev_install_output)
+message(STATUS "udev install response: ${udev_install_output}")
+
 find_package(catkin REQUIRED COMPONENTS 
 	nodelet rospy roscpp dynamic_reconfigure message_generation
 	camera_info_manager image_transport sensor_msgs stereo_msgs cv_bridge
