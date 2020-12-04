@@ -34,7 +34,7 @@ jobs:
           source /opt/ros/$ROS_DISTRO/setup.bash
           mkdir -p ~/catkin_ws/src
           cd ~/catkin_ws
-          wstool init src https://raw.githubusercontent.com/i3drobotics/i3dr_deimos-ros/master/install/i3dr_deimos_https.rosinstall
+          wstool init src $CI_SOURCE_PATH/install/i3dr_deimos_https.rosinstall
           rosdep install --from-paths src --ignore-src -r -y
       - name: Build workspace
         run: |
