@@ -12,9 +12,9 @@ jobs:
         ros-distro: [kinetic]
 
     steps:
-    - name: Install ros
-      run: |
-        sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-        sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
-        sudo apt-get update
-        sudo apt-get install -y ros-${{ matrix.kinetic }}
+    - uses: actions/checkout@v2.3.4
+    - uses: ros-tooling/setup-ros@0.0.26
+    - uses: ros-tooling/action-ros2-lint@0.0.6
+      with:
+        target-ros1-distro: kinetic
+        package-name: i3dr_deimos
