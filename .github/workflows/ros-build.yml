@@ -29,10 +29,16 @@ jobs:
             # Prepare rosdep to install dependencies.
             sudo rosdep init
             rosdep update --include-eol-distros  # Support EOL distros.
-      - name: build
+      - name: Setup ROS workspace
         run: |
           source /opt/ros/$ROS_DISTRO/setup.bash
           mkdir -p ~/catkin_ws/src
+          cd ~/catkin_ws
+          wstool init src https://raw.githubusercontent.com/i3drobotics/i3dr_deimos-ros/master/install/i3dr_deimos_https.rosinstall
+          rosdep install --from-paths src --ignore-src -r -y
+      - name: Build workspace
+        run: |
+          source /opt/ros/$ROS_DISTRO/setup.bash
           cd ~/catkin_ws
           catkin build
           source devel/setup.bash
@@ -42,7 +48,3 @@ jobs:
           # echo "::warning `ls -l`"
           cd ..
           catkin build
-      - name: lint
-        run: |
-          cd ~/catkin_ws
-          catkin build i3dr_deimos
