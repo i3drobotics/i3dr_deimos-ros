@@ -2,6 +2,9 @@
 
 ROS package for i3D Robotics' Deimos stereo camera, derived from the e-consystems See3CAM_Stereo (Tara) camera driver. This driver is in turn based on the [uvc_camera](https://github.com/ktossell/camera_umd/tree/master/uvc_camera) package. We have made significant improvements to the driver which make it a lot more usable in ROS.
 
+## Status
+![ROS Build](https://github.com/i3drobotics/i3dr_deimos-ros/workflows/ROS%20Build/badge.svg?event=push)
+
 ## Installation
 
 For an easy setup, a rosinstall file is provided in 'install' folder of this repo which can be used to get this package and it's dependent ros packages in your workspace. 
