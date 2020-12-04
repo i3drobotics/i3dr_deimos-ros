@@ -1,0 +1,28 @@
+- git:
+    local-name: i3dr_deimos-ros
+    uri: https://github.com/i3drobotics/i3dr_deimos-ros.git
+    version: master
+- git:
+    local-name: vision_opencv
+    uri: https://github.com/ros-perception/vision_opencv.git
+    version: kinetic
+- git:
+    local-name: i3dr_stereo_camera-ros
+    uri: https://github.com/i3drobotics/i3dr_stereo_camera-ros.git
+    version: master
+- git:
+    local-name: i3dr_pcl_tools-ros
+    uri: https://github.com/i3drobotics/i3dr_pcl_tools-ros.git
+    version: master
+- git:
+    local-name: camera_control_msgs
+    uri: https://github.com/i3drobotics/camera_control_msgs.git
+    version: indigo-devel
+- git:
+    local-name: opencv
+    uri: https://github.com/opencv/opencv
+    version: 3.4
+- git:
+    local-name: opencv_contrib
+    uri: https://github.com/opencv/opencv_contrib
+    version: 3.4
