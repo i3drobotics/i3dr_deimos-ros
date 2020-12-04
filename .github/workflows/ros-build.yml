@@ -13,7 +13,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2.3.4
-    - uses: ros-tooling/setup-ros@0.0.26
+    - uses: ros-tooling/setup-ros@0.1.0
     - uses: ros-tooling/action-ros-ci@0.1.0
       with:
         target-ros1-distro: kinetic
