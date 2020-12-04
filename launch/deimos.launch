@@ -11,6 +11,9 @@
     <arg name="rviz" default="false" />
     <!-- enable/disable calibration -->
     <arg name="calibrate" default="false"/>
+    <arg name="grid_rows" default="8" />
+    <arg name="grid_cols" default="6" />
+    <arg name="grid_size" default="0.039" />
     <!-- namespace for camera -->
     <arg name="camera_namespace" default="i3dr_deimos"/>
     <!-- enable/disable stereo matching (3D generation) -->
@@ -70,7 +73,9 @@
     <include if="$(arg calibrate)" file="$(find i3dr_stereo_camera)/launch/stereo_calibration.launch">
         <arg name="camera_namespace" value="$(arg camera_namespace)"/>
         <arg name="multi_board" value="false" />
-        <arg name="grid_rows" value="8" />
+        <arg name="grid_rows" value="$(arg grid_rows)" />
+        <arg name="grid_cols" value="$(arg grid_cols)" />
+        <arg name="grid_size" value="$(arg grid_size)" />
     </include>
 
     <!-- STEREO MATCHER -->
