@@ -2,10 +2,11 @@
 <!--XML-->
 <launch>
     <!-- SETUP ARGUMENTS -->
+    <arg name="device" default="/dev/video0" />
     <!-- algorithm 0: OpenCV block -->
     <!-- algorithm 1: OpenCV SGBM -->
-    <!-- algorithm 2: I3DR SGM -->
-    <arg name="stereo_algorithm" default="2" />
+    <!-- algorithm 2: I3DR SGM (only aviable if i3dr_stereo_camera build with I3DRSGM) -->
+    <arg name="stereo_algorithm" default="0" />
     <!-- enable/disable rviz -->
     <arg name="rviz" default="false" />
     <!-- enable/disable calibration -->
@@ -15,14 +16,16 @@
     <!-- enable/disable stereo matching (3D generation) -->
     <arg name="stereo_match" default="true"/>
     <!-- set this to your camera_serial (this will be used to choose the right calibration files)-->
-    <arg name="camera_serial" default="001023"/>
-    <arg name="imu" default="true" />
+    <arg name="camera_serial" default="6465696d6f7365"/>
+    <arg name="imu" default="false" />
     <!-- enable/disable mapping with rtabmap -->
     <arg name="map" default="false" />
     <!-- maximum distance for depth map -->
     <arg name="depth_max" default="5" />
     <!-- maximum distance for point cloud -->
     <arg name="z_max" default="5" />
+    <!-- camera exposure (ms) -->
+    <arg name="exposure" default="5000" />
     <!-- enable/disable stereo gui (beta)-->
     <arg name="gui" default="false" />
 
@@ -45,7 +48,7 @@
     <arg name="urdf_namespace" default="$(arg camera_namespace)"/>
   
     <!-- SETUP ROBOT MODEL -->
-    <arg name="imu_urdf" default="false" />
+    <arg name="imu_urdf" default="$(arg imu)" />
     <param name="$(arg urdf_namespace)_robot_description" command="$(find xacro)/xacro '$(find i3dr_deimos)/urdf/deimos_scene.urdf.xacro' en_imu:=$(arg imu_urdf) camera_name:=$(arg urdf_namespace)" />
     <node name="robot_state_publisher_deimos" pkg="robot_state_publisher" type="state_publisher">
         <remap from="robot_description" to="$(arg urdf_namespace)_robot_description"/>
@@ -55,9 +58,9 @@
     <include file="$(find i3dr_deimos)/launch/deimos_capture.launch">
         <arg name="camera_namespace" value="$(arg camera_namespace)"/>
         <!-- choose which usb dev port the camera is attached to -->
-        <arg name="device" value="/dev/video0"/>
+        <arg name="device" value="$(arg device)"/>
         <!-- adjust the camera exposure -->
-        <arg name="exposure" value="5000" />
+        <arg name="exposure" value="$(arg exposure)" />
         <arg name="frame_id" value="$(arg urdf_namespace)_depth_optical_frame" />
         <arg name="cameraLeft_info_url"  value="$(arg cameraLeft_info_url)" />
         <arg name="cameraRight_info_url" value="$(arg cameraRight_info_url)" />
