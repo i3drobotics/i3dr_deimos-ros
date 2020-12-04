@@ -18,10 +18,10 @@ Edited: 2019, Marti Morta Garriga, Wood.
     <xacro:property name="fov_rad" value="${62.8 * pi/180.0}"/>
     <xacro:property name="sim_w" value="320"/>
     <xacro:property name="sim_h" value="240"/>
-    <xacro:property name="sim_rate" value="0.5"/>
+    <xacro:property name="sim_rate" value="1"/>
     <xacro:property name="sim3d_w" value="320"/>
     <xacro:property name="sim3d_h" value="240"/>
-    <xacro:property name="sim3d_rate" value="0.5"/>
+    <xacro:property name="sim3d_rate" value="0.1"/>
 
     <link name="${camera_name}_cameraLeft_optical" />
     <link name="${camera_name}_cameraRight_optical" />
@@ -116,7 +116,7 @@ Edited: 2019, Marti Morta Garriga, Wood.
     <joint name="${camera_name}_depth_optical_joint" type="fixed">
         <parent link="${camera_name}_cameraLeft_optical"/>
         <child link="${camera_name}_depth_optical_frame"/>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0 0 0" rpy="0 ${-pi/2} ${pi/2}" />
     </joint>
 
     <joint name="${camera_name}_mount_center_joint" type="fixed">
@@ -148,7 +148,8 @@ Edited: 2019, Marti Morta Garriga, Wood.
           <image>
               <width>${sim_w}</width> <!-- real: 752 -->
               <height>${sim_h}</height> <!-- real 480 -->
-              <format>L8</format>
+              <!-- <format>L8</format> -->
+              <format>R8G8B8</format>
           </image>
           <clip>
               <near>0.02</near>
@@ -189,24 +190,24 @@ Edited: 2019, Marti Morta Garriga, Wood.
         <camera>
           <horizontal_fov>${fov_rad}</horizontal_fov>
           <image>
-            <format>R8G8B8</format>
+            <format>B8G8R8</format>
             <width>${sim3d_w}</width>
             <height>${sim3d_h}</height>
           </image>
           <clip>
             <near>0.05</near>
-            <far>12</far>
+            <far>5</far>
           </clip>
         </camera>
         <plugin name="${camera_name}_depth_camera_controller" filename="libgazebo_ros_openni_kinect.so">
           <alwaysOn>true</alwaysOn>
           <updateRate>${sim3d_rate}</updateRate>
+          <frameName>${camera_name}_cameraLeft_optical</frameName>
           <imageTopicName>${camera_name}_depth/image_raw</imageTopicName>
           <cameraInfoTopicName>${camera_name}_depth/camera_info</cameraInfoTopicName>
           <depthImageTopicName>${camera_name}_depth/depth/image_raw</depthImageTopicName>
           <depthImageCameraInfoTopicName>${camera_name}_depth/depth/camera_info</depthImageCameraInfoTopicName>
           <pointCloudTopicName>${camera_name}_depth/depth/points</pointCloudTopicName>
-          <frameName>${camera_name}_cameraLeft_optical</frameName>
           <distortion_k1>0.0</distortion_k1>
           <distortion_k2>0.0</distortion_k2>
           <distortion_k3>0.0</distortion_k3>
