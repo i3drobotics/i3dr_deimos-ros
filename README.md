@@ -96,7 +96,7 @@ This will assume you are using an 8x6 calibration board with 0.039m squares. If 
 roslaunch i3dr_deimos deimos.launch calibrate:=true grid_rows:=8 grid_cols:=6 grid_size:=0.039
 ```
 
-The calibration window should appear. 
+The calibration display should appear. 
 
 See [link](http://wiki.ros.org/camera_calibration) for details.
 

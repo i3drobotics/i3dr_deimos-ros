@@ -37,7 +37,5 @@
   <depend>cv_bridge</depend>
   <depend>i3dr_stereo_camera</depend>
   <depend>v4l-utils</depend>
-  <depend>qv4l2</depend>
-  <depend>v4l2ucp</depend>
   <depend>libudev-dev</depend>
 </package>
