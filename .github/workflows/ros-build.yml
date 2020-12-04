@@ -34,17 +34,11 @@ jobs:
           source /opt/ros/$ROS_DISTRO/setup.bash
           mkdir -p ~/catkin_ws/src
           cd ~/catkin_ws
+          catkin build
           wstool init src $CI_SOURCE_PATH/install/i3dr_deimos_https.rosinstall
           rosdep install --from-paths src --ignore-src -r -y
       - name: Build workspace
         run: |
           source /opt/ros/$ROS_DISTRO/setup.bash
           cd ~/catkin_ws
-          catkin build
-          source devel/setup.bash
-          cd ~/catkin_ws/src
-          ln -s ~/work  # $CI_SOURCE_PATH
-          # echo "::warning $CI_SOURCE_PATH"
-          # echo "::warning `ls -l`"
-          cd ..
           catkin build
