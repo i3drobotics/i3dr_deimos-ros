@@ -4,13 +4,13 @@ ROS package for i3D Robotics' Deimos stereo camera, derived from the e-consystem
 
 ## Installation
 
-For an easy setup rosinstall file is provided in 'install' which can be used to get this package and it's dependent ros packages in your workspace. 
+For an easy setup, a rosinstall file is provided in 'install' folder of this repo which can be used to get this package and it's dependent ros packages in your workspace. 
 In your ROS workspace use the following command:
 ```
 wstool init src https://raw.githubusercontent.com/i3drobotics/i3dr_deimos-ros/master/install/i3dr_deimos_https.rosinstall
 ```
 
-If you do not use wstool you can download the packages using the following command:
+If you do not use wstool, you can download the packages using the following command:
 ```
 cd PATH_TO_ROS_WS/src
 git clone https://github.com/i3drobotics/i3dr_deimos-ros.git
