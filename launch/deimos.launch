@@ -2,18 +2,33 @@
 <!--XML-->
 <launch>
     <!-- SETUP ARGUMENTS -->
+
+    <!-- Camera device Deimos is connected -->
+    <!-- Set to 'rosbag' if loading from bag file -->
     <arg name="device" default="/dev/video0" />
+    <!--<arg name="device" default="rosbag" />-->
+    <!-- Rosbag to load/save images from (only used if 'device' is set to 'rosbag' -->
+    <!-- Expects the following topics in the bag: -->
+    <!-- i3dr_deimos/left/camera_info, i3dr_deimos/left/image_raw, -->
+    <!-- i3dr_deimos/right/camera_info, i3dr_deimos/right/image_raw -->
+    <arg name="bag_file" default="$(find i3dr_deimos)/bag/scene001.bag" />
+    <arg name="save_bag" default="true" />
+
+    <!-- Stereo matching algorithm to use -->
     <!-- algorithm 0: OpenCV block -->
     <!-- algorithm 1: OpenCV SGBM -->
     <!-- algorithm 2: I3DR SGM (only aviable if i3dr_stereo_camera build with I3DRSGM) -->
     <arg name="stereo_algorithm" default="0" />
+
     <!-- enable/disable rviz -->
     <arg name="rviz" default="false" />
+
     <!-- enable/disable calibration -->
     <arg name="calibrate" default="false"/>
     <arg name="grid_rows" default="8" />
     <arg name="grid_cols" default="6" />
     <arg name="grid_size" default="0.039" />
+
     <!-- namespace for camera -->
     <arg name="camera_namespace" default="i3dr_deimos"/>
     <!-- enable/disable stereo matching (3D generation) -->
@@ -57,17 +72,25 @@
         <remap from="robot_description" to="$(arg urdf_namespace)_robot_description"/>
     </node>
 
-    <!-- STEREO CAPTURE -->
-    <include file="$(find i3dr_deimos)/launch/deimos_capture.launch">
-        <arg name="camera_namespace" value="$(arg camera_namespace)"/>
-        <!-- choose which usb dev port the camera is attached to -->
-        <arg name="device" value="$(arg device)"/>
-        <!-- adjust the camera exposure -->
-        <arg name="exposure" value="$(arg exposure)" />
-        <arg name="frame_id" value="$(arg urdf_namespace)_depth_optical_frame" />
-        <arg name="cameraLeft_info_url"  value="$(arg cameraLeft_info_url)" />
-        <arg name="cameraRight_info_url" value="$(arg cameraRight_info_url)" />
-    </include>
+    <group if="$(eval device == 'rosbag')">
+        <!-- Load images from rosbag -->
+        <node pkg="rosbag" type="play" name="$(arg camera_namespace)_rosbag_play" output="screen" args="--clock --loop $(arg bag_file)"/>
+    </group>
+    <group unless="$(eval device == 'rosbag')">
+        <!-- STEREO CAPTURE -->
+        <include file="$(find i3dr_deimos)/launch/deimos_capture.launch">
+            <arg name="camera_namespace" value="$(arg camera_namespace)"/>
+            <!-- choose which usb dev port the camera is attached to -->
+            <arg name="device" value="$(arg device)"/>
+            <!-- adjust the camera exposure -->
+            <arg name="exposure" value="$(arg exposure)" />
+            <arg name="frame_id" value="$(arg urdf_namespace)_depth_optical_frame" />
+            <arg name="cameraLeft_info_url"  value="$(arg cameraLeft_info_url)" />
+            <arg name="cameraRight_info_url" value="$(arg cameraRight_info_url)" />
+        </include>
+        <node if="$(arg save_bag)" pkg="rosbag" type="record" name="$(arg camera_namespace)_rosbag_record"
+              args="record -O $(arg bag_file) tf i3dr_deimos/left/camera_info i3dr_deimos/left/image_raw i3dr_deimos/right/camera_info i3dr_deimos/right/image_raw"/>
+    </group>
 
     <!-- STEREO CALIBRATION -->
     <include if="$(arg calibrate)" file="$(find i3dr_stereo_camera)/launch/stereo_calibration.launch">
@@ -106,12 +129,12 @@
         <!-- tested good matcher parameters for deimos -->
         <arg if="$(eval stereo_algorithm == 0)" name="correlation_window_size" value="13" />
         <arg if="$(eval stereo_algorithm == 0)" name="min_disparity" value="0" />
-        <arg if="$(eval stereo_algorithm == 0)" name="disparity_range" value="80" />
+        <arg if="$(eval stereo_algorithm == 0)" name="disparity_range" value="176" />
         <arg if="$(eval stereo_algorithm == 1)" name="correlation_window_size" value="13" />
         <arg if="$(eval stereo_algorithm == 1)" name="min_disparity" value="0" />
-        <arg if="$(eval stereo_algorithm == 1)" name="disparity_range" value="80" />
+        <arg if="$(eval stereo_algorithm == 1)" name="disparity_range" value="176" />
         <arg if="$(eval stereo_algorithm == 2)" name="correlation_window_size" value="5" />
-        <arg if="$(eval stereo_algorithm == 2)" name="min_disparity" value="500" />
+        <arg if="$(eval stereo_algorithm == 2)" name="min_disparity" value="0" />
         <arg if="$(eval stereo_algorithm == 2)" name="disparity_range" value="530" />
         <arg if="$(eval stereo_algorithm == 2)" name="prefilter_cap" value="5" />
         <arg if="$(eval stereo_algorithm == 2)" name="interp" value="false"/>
