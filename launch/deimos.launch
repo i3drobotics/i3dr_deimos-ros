@@ -12,7 +12,7 @@
     <!-- i3dr_deimos/left/camera_info, i3dr_deimos/left/image_raw, -->
     <!-- i3dr_deimos/right/camera_info, i3dr_deimos/right/image_raw -->
     <arg name="bag_file" default="$(find i3dr_deimos)/bag/scene001.bag" />
-    <arg name="save_bag" default="true" />
+    <arg name="save_bag" default="false" />
 
     <!-- Stereo matching algorithm to use -->
     <!-- algorithm 0: OpenCV block -->
