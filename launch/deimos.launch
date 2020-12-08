@@ -6,7 +6,6 @@
     <!-- Camera device Deimos is connected -->
     <!-- Set to 'rosbag' if loading from bag file -->
     <arg name="device" default="/dev/video0" />
-    <!--<arg name="device" default="rosbag" />-->
     <!-- Rosbag to load/save images from (only used if 'device' is set to 'rosbag' -->
     <!-- Expects the following topics in the bag: -->
     <!-- i3dr_deimos/left/camera_info, i3dr_deimos/left/image_raw, -->
