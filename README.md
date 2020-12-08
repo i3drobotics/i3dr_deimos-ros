@@ -12,6 +12,11 @@ In your ROS workspace use the following command:
 ```
 wstool init src https://raw.githubusercontent.com/i3drobotics/i3dr_deimos-ros/master/install/i3dr_deimos_https.rosinstall
 ```
+If you already have a wstool workspace setup then use the following command instead:
+```
+wstool merge -t src https://raw.githubusercontent.com/i3drobotics/i3dr_deimos-ros/master/install/i3dr_deimos_https.rosinstall
+wstool update -t src
+```
 
 If you do not use wstool, you can download the packages using the following command:
 ```
