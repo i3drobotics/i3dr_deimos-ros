@@ -44,6 +44,25 @@ roslaunch i3dr_deimos deimos.launch rviz:=true
 
 This package has been tested informally on Ubuntu 16.04, but should run on most distros. It has also been tested on the Jetson TX1 and TX2.
 
+## Sample Bag
+The camera system can be tested when the camera is not connected by using one of our sample bags. These can be downloaded using the 'download.sh' script in the 'bag' folder:
+```
+./download.sh
+```
+Scene001: Random objects (wooden blocks, book and hard drive) on textured floor (duration: 11 seconds)
+
+Once downloaded you can use the standard launch file to play the bag file using:
+```
+roslaunch i3dr_deimos deimos.launch device:=rosbag
+```
+
+This will loop and publish the following topics:
+- tf
+- i3dr_deimos/left/camera_info
+- i3dr_deimos/left/image_raw
+- i3dr_deimos/right/camera_info
+- i3dr_deimos/right/image_raw
+
 ## Introduction
 
 Creates a stereo image node pair (`left/image_raw` and `right/image_raw`) from any connected Deimos device. This is for compatibility with any other ROS modules which support stereo cameras. This driver has been modified to respect ROS image pipeline conventions and to ease use of the IMU. As per convention, both left and right images are published in the left camera optical frame. IMU data are published in the `imu_link` frame on the `imu_data` topic.
@@ -102,25 +121,6 @@ roslaunch i3dr_deimos deimos.launch calibrate:=true grid_rows:=8 grid_cols:=6 gr
 The calibration display should appear. 
 
 See [link](http://wiki.ros.org/camera_calibration) for details.
-
-## Sample Bag
-The camera system can be tested when the camera is not connected by using one of our sample bags. These can be downloaded using the 'download.sh' script in 'bag' folder:
-```
-./download.sh
-```
-Scene001: Random objects on textured floor
-
-Once downloaded you can use the launch file to play the bag file using:
-```
-roslaunch i3dr_deimos deimos.launch device:=rosbag
-```
-
-This will publish the following topics:
-- tf
-- i3dr_deimos/left/camera_info
-- i3dr_deimos/left/image_raw
-- i3dr_deimos/right/camera_info
-- i3dr_deimos/right/image_raw
 
 ## Some Tested Examples
 
