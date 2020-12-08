@@ -103,6 +103,25 @@ The calibration display should appear.
 
 See [link](http://wiki.ros.org/camera_calibration) for details.
 
+## Sample Bag
+The camera system can be tested when the camera is not connected by using one of our sample bags. These can be downloaded using the 'download.sh' script in 'bag' folder:
+```
+./download.sh
+```
+Scene001: Random objects on textured floor
+
+Once downloaded you can use the launch file to play the bag file using:
+```
+roslaunch i3dr_deimos deimos.launch device:=rosbag
+```
+
+This will publish the following topics:
+- tf
+- i3dr_deimos/left/camera_info
+- i3dr_deimos/left/image_raw
+- i3dr_deimos/right/camera_info
+- i3dr_deimos/right/image_raw
+
 ## Some Tested Examples
 
 * To check the exposure of the camera at run time:
