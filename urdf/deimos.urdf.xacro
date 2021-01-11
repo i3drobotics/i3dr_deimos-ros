@@ -10,18 +10,22 @@ Edited: 2019, Marti Morta Garriga, Wood.
     <xacro:property name="height" value="0.038"/>
     <xacro:property name="width" value="0.10175"/>
     <xacro:property name="length" value="0.03242"/>
+    <xacro:property name="baseline" value="0.06"/>
+    <xacro:property name="img_w" value="742"/>
+    <xacro:property name="img_h" value="480"/>
     <xacro:property name="mesh_file" value="package://i3dr_deimos/mesh/deimos.stl"/>
     <xacro:property name="mesh_offset_xyz" value="-0.008 0.002 0"/>
     <xacro:property name="mesh_offset_rpy" value="${pi/2} 0 ${pi/2}"/>
     <xacro:property name="box_offset_xyz" value="0 0 0"/>
     <xacro:property name="box_offset_rpy" value="0 0 0"/>
     <xacro:property name="fov_rad" value="${62.8 * pi/180.0}"/>
-    <xacro:property name="sim_w" value="320"/>
-    <xacro:property name="sim_h" value="240"/>
+    <xacro:property name="sim_w" value="${img_w/1}"/>
+    <xacro:property name="sim_h" value="${img_h/1}"/>
     <xacro:property name="sim_rate" value="1"/>
-    <xacro:property name="sim3d_w" value="320"/>
-    <xacro:property name="sim3d_h" value="240"/>
-    <xacro:property name="sim3d_rate" value="0.1"/>
+
+    <material name="darkgrey">
+        <color rgba= "0.1 0.1 0.1 1.0"/>
+    </material>
 
     <link name="${camera_name}_cameraLeft_optical" />
     <link name="${camera_name}_cameraRight_optical" />
@@ -44,6 +48,20 @@ Edited: 2019, Marti Morta Garriga, Wood.
     <link name="${camera_name}_probe_mount"/>
 
     <link name="${camera_name}_center">
+        <pose>0 0 0 0 0 0</pose>
+
+        <inertial>
+            <mass value="0.11"/>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+        </inertial>
+
+        <collision name="${camera_name}_center_collision">
+            <geometry>
+                <box size="${length} ${width} ${height}"/>
+            </geometry>
+        </collision>
+
         <visual>
             <xacro:if value="${(en_mesh == 'true')}">
                 <origin xyz="${mesh_offset_xyz}" rpy="${mesh_offset_rpy}"/>
@@ -59,11 +77,7 @@ Edited: 2019, Marti Morta Garriga, Wood.
                     <box size="${length} ${width} ${height}"/>
                 </xacro:if>
             </geometry>
-            <xacro:if value="${(en_mesh == 'false')}">
-                <material name="${camera_name}_camera_colour">
-                    <color rgba="0.1 0.1 0.1 1.0"/>
-                </material>
-            </xacro:if>
+            <material name="darkgrey"/>
         </visual>
     </link>
 
@@ -142,31 +156,32 @@ Edited: 2019, Marti Morta Garriga, Wood.
         <origin xyz="${(-0.03/2)-0.002} -0.007 ${-0.038/2}" rpy="0 0 0" />
     </joint>
 
-    <xacro:macro name="optical_camera" params="name fov_rad:=^ sim_w:=^ sim_h:=^">
+    <!-- Simulate stereo camera using gazebo -->
+    <xacro:macro name="optical_camera" params="name offset fov_rad:=^ sim_w:=^ sim_h:=^">
         <camera name="${name}">
-          <horizontal_fov>${fov_rad}</horizontal_fov>
-          <image>
-              <width>${sim_w}</width> <!-- real: 752 -->
-              <height>${sim_h}</height> <!-- real 480 -->
-              <!-- <format>L8</format> -->
-              <format>R8G8B8</format>
-          </image>
-          <clip>
-              <near>0.02</near>
-              <far>300</far>
-          </clip>
-          <noise>
-              <type>gaussian</type>
-              <mean>0.0</mean>
-              <stddev>0.007</stddev>
-          </noise>
+            <pose>0 ${offset} 0 0 0 0</pose>
+            <horizontal_fov>${fov_rad}</horizontal_fov>
+            <image>
+                <width>${sim_w}</width>
+                <height>${sim_h}</height>
+                <format>B8G8R8</format>
+            </image>
+            <clip>
+                <near>0.02</near>
+                <far>300</far>
+            </clip>
+            <noise>
+                <type>gaussian</type>
+                <mean>0.0</mean>
+                <stddev>0.007</stddev>
+            </noise>
       </camera>
     </xacro:macro>
     <gazebo reference="${camera_name}_cameraLeft">
       <sensor type="multicamera" name="stereo_camera">
         <update_rate>${sim_rate}</update_rate> <!-- reality 60fps on USB3-->
-        <optical_camera name="left" />
-        <optical_camera name="right" />
+        <optical_camera name="left" offset="0" />
+        <optical_camera name="right" offset="${-baseline}" />
         <plugin name="stereo_camera_controller" filename="libgazebo_ros_multicamera.so">
           <alwaysOn>true</alwaysOn>
           <updateRate>${sim_rate}</updateRate>
@@ -174,7 +189,7 @@ Edited: 2019, Marti Morta Garriga, Wood.
           <imageTopicName>image_raw</imageTopicName>
           <cameraInfoTopicName>camera_info</cameraInfoTopicName>
           <frameName>${camera_name}_cameraLeft_optical</frameName>
-          <hackBaseline>0.07</hackBaseline>
+          <hackBaseline>${baseline}</hackBaseline>
           <distortionK1>0.0</distortionK1>
           <distortionK2>0.0</distortionK2>
           <distortionK3>0.0</distortionK3>
@@ -184,37 +199,34 @@ Edited: 2019, Marti Morta Garriga, Wood.
       </sensor>
     </gazebo>
 
-    <gazebo reference="${camera_name}_depth_optical_frame">
-      <sensor type="depth" name="${camera_name}_depth_camera">
-        <update_rate>${sim3d_rate}</update_rate>
-        <camera>
-          <horizontal_fov>${fov_rad}</horizontal_fov>
-          <image>
-            <format>B8G8R8</format>
-            <width>${sim3d_w}</width>
-            <height>${sim3d_h}</height>
-          </image>
-          <clip>
-            <near>0.05</near>
-            <far>5</far>
-          </clip>
-        </camera>
-        <plugin name="${camera_name}_depth_camera_controller" filename="libgazebo_ros_openni_kinect.so">
-          <alwaysOn>true</alwaysOn>
-          <updateRate>${sim3d_rate}</updateRate>
-          <frameName>${camera_name}_cameraLeft_optical</frameName>
-          <imageTopicName>${camera_name}_depth/image_raw</imageTopicName>
-          <cameraInfoTopicName>${camera_name}_depth/camera_info</cameraInfoTopicName>
-          <depthImageTopicName>${camera_name}_depth/depth/image_raw</depthImageTopicName>
-          <depthImageCameraInfoTopicName>${camera_name}_depth/depth/camera_info</depthImageCameraInfoTopicName>
-          <pointCloudTopicName>${camera_name}_depth/depth/points</pointCloudTopicName>
-          <distortion_k1>0.0</distortion_k1>
-          <distortion_k2>0.0</distortion_k2>
-          <distortion_k3>0.0</distortion_k3>
-          <distortion_t1>0.0</distortion_t1>
-          <distortion_t2>0.0</distortion_t2>
-        </plugin>
-      </sensor>
+    <!-- Simulate IMU using gazebo -->
+    <xacro:if value="${(en_imu == 'true')}">
+        <gazebo reference="${camera_name}_imu_link">
+            <gravity>true</gravity>
+            <sensor name="imu_sensor" type="imu">
+            <always_on>true</always_on>
+            <update_rate>100</update_rate>
+            <visualize>true</visualize>
+            <topic>__default_topic__</topic>
+            <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+                <topicName>imu</topicName>
+                <bodyName>${camera_name}_imu_link</bodyName>
+                <updateRateHZ>10.0</updateRateHZ>
+                <gaussianNoise>0.0</gaussianNoise>
+                <xyzOffset>0 0 0</xyzOffset>
+                <rpyOffset>0 0 0</rpyOffset>
+                <frameName>${camera_name}_imu_link</frameName>
+                <initialOrientationAsReference>false</initialOrientationAsReference>
+            </plugin>
+            <pose>0 0 0 0 0 0</pose>
+            </sensor>
+        </gazebo>
+    </xacro:if>
+
+    <!-- Attach material to gazebo object -->
+    <gazebo reference="${camera_name}_center">
+        <gravity>true</gravity>
+        <material>Gazebo/DarkGrey</material>
     </gazebo>
 
   </xacro:macro>

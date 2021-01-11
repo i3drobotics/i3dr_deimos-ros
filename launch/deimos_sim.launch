@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<!--XML-->
+<launch>
+    <!-- namespace for camera -->
+    <arg name="camera_namespace" default="i3dr_deimos"/>
+
+    <!-- Use full res camera model mesh (slower) -->
+    <arg name="camera_mesh" default="false" />
+    <arg name="imu" default="false" /> <!-- NOT YET IMPLIMENTED -->
+
+    <arg name="urdf_namespace" default="$(arg camera_namespace)"/>
+    <arg name="new_gazebo_world" default="true"/>
+
+    <!-- Start new gazebo instance -->
+    <include if="$(arg new_gazebo_world)" file="$(find gazebo_ros)/launch/empty_world.launch">
+        <!--<arg name="world_name" value="agriculture.world"/>-->
+        <arg name="world_name" value="$(find i3dr_deimos)/worlds/test.world"/>
+        <arg name="paused" value="false"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="gui" value="true"/>
+        <arg name="recording" value="false"/>
+        <arg name="debug" value="false"/>
+    </include>
+
+    <!-- Spawn camera -->
+    <param name="$(arg camera_namespace)_robot_description" command="$(find xacro)/xacro '$(find i3dr_deimos)/urdf/deimos_scene.urdf.xacro' en_imu:=$(arg imu) camera_name:=$(arg urdf_namespace) en_mesh:=$(arg camera_mesh)" />
+    <node name="robot_state_publisher_$(arg camera_namespace)" pkg="robot_state_publisher" type="state_publisher">
+        <remap from="robot_description" to="$(arg camera_namespace)_robot_description"/>
+    </node>
+    <node name="$(arg camera_namespace)_spawn" pkg="gazebo_ros" type="spawn_model" output="screen"
+        args="-urdf -param $(arg camera_namespace)_robot_description -model $(arg urdf_namespace)" />
+
+</launch>

@@ -13,6 +13,11 @@
     <arg name="bag_file" default="$(find i3dr_deimos)/bag/scene001.bag" />
     <arg name="save_bag" default="false" />
 
+    <!-- simulate camera with gazebo -->
+    <arg name="sim" default="false"/>
+    <!-- Use full res camera model mesh (slower) -->
+    <arg name="camera_mesh" default="false" />
+
     <!-- Stereo matching algorithm to use -->
     <!-- algorithm 0: OpenCV block -->
     <!-- algorithm 1: OpenCV SGBM -->
@@ -66,19 +71,24 @@
   
     <!-- SETUP ROBOT MODEL -->
     <arg name="imu_urdf" default="$(arg imu)" />
-    <param name="$(arg urdf_namespace)_robot_description" command="$(find xacro)/xacro '$(find i3dr_deimos)/urdf/deimos_scene.urdf.xacro' en_imu:=$(arg imu_urdf) camera_name:=$(arg urdf_namespace)" />
-    <node name="robot_state_publisher_deimos" pkg="robot_state_publisher" type="state_publisher">
-        <remap from="robot_description" to="$(arg urdf_namespace)_robot_description"/>
-    </node>
 
     <group if="$(eval device == 'rosbag')">
         <!-- Load images from rosbag -->
         <node pkg="rosbag" type="play" name="$(arg camera_namespace)_rosbag_play" output="screen" args="--clock --loop $(arg bag_file)"/>
     </group>
     <group unless="$(eval device == 'rosbag')">
-        <!-- STEREO CAPTURE -->
-        <include file="$(find i3dr_deimos)/launch/deimos_capture.launch">
+        <!-- Simulate camera capture with gazebo -->
+        <include if="$(arg sim)" file="$(find i3dr_deimos)/launch/deimos_sim.launch">
+            <arg name="imu" value="$(arg imu)" />
+            <arg name="camera_mesh" value="$(arg camera_mesh)" />
             <arg name="camera_namespace" value="$(arg camera_namespace)"/>
+            <arg name="urdf_namespace" value="$(arg urdf_namespace)"/>
+            <arg name="new_gazebo_world" value="true"/> <!-- should be false if using in your own gazebo world -->
+        </include>
+        <!-- STEREO CAPTURE -->
+        <include unless="$(arg sim)" file="$(find i3dr_deimos)/launch/deimos_capture.launch">
+            <arg name="camera_namespace" value="$(arg camera_namespace)"/>
+            <arg name="urdf_namespace" value="$(arg urdf_namespace)"/>
             <!-- choose which usb dev port the camera is attached to -->
             <arg name="device" value="$(arg device)"/>
             <!-- adjust the camera exposure -->
@@ -86,6 +96,8 @@
             <arg name="frame_id" value="$(arg urdf_namespace)_depth_optical_frame" />
             <arg name="cameraLeft_info_url"  value="$(arg cameraLeft_info_url)" />
             <arg name="cameraRight_info_url" value="$(arg cameraRight_info_url)" />
+            <arg name="imu" value="$(arg imu)" />
+            <arg name="camera_mesh" value="$(arg camera_mesh)" />
         </include>
         <node if="$(arg save_bag)" pkg="rosbag" type="record" name="$(arg camera_namespace)_rosbag_record"
               args="record -O $(arg bag_file) tf i3dr_deimos/left/camera_info i3dr_deimos/left/image_raw i3dr_deimos/right/camera_info i3dr_deimos/right/image_raw"/>

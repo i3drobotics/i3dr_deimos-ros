@@ -8,20 +8,8 @@ Copyright (c) 2019, I3D Robotics Ltd.
 
     <xacro:arg name="camera_name" default="deimos"/>
     <xacro:arg name="en_imu" default="false"/>
-    <!--<link name="odom"/>-->
-<!--
-    <xacro:include filename="$(find i3dr_stereo_camera)/urdf/i3dr_stereo_camera.urdf.xacro" />
-
-    <xacro:i3dr_stereo_camera camera_name="deimos" baseline="0.06" toe_in_r="0" toe_in_l="0" model_offset_xyz="-0.014 0 0" model_offset_rpy="1.57 0 1.57" width="0.10175" height="0.038" length="0.03242" imu_en="false" load_mesh="true" mesh_file="package://i3dr_deimos/mesh/deimos.stl" mount_offset_y="-0.015" image_width="752" image_height="480" image_format="MONO8" hfov="1.04" focus_near="0.3" r="0.1" g="0.1" b="0.1"/>
--->
+    <xacro:arg name="en_mesh" default="true"/>
 
     <xacro:include filename="$(find i3dr_deimos)/urdf/deimos.urdf.xacro" />
     <xacro:deimos_camera camera_name="$(arg camera_name)" en_mesh="true" en_imu="$(arg en_imu)"/>
-    <!--
-    <joint name="$(arg camera_name)_odom_joint" type="floating">
-        <origin xyz="0 0 0" rpy="0 0 0" />
-        <parent link="$(arg camera_name)_base_link"/>
-        <child link="odom"/>
-    </joint>
-    -->
 </robot>
