@@ -68,6 +68,7 @@
     <!-- this should not change as it is the namespace of frames in the urdf-->
     <arg name="camera_model" default="deimos"/>
     <arg name="urdf_namespace" default="$(arg camera_namespace)"/>
+    <arg name="new_gazebo_world" default="true"/>
   
     <!-- SETUP ROBOT MODEL -->
     <arg name="imu_urdf" default="$(arg imu)" />
@@ -83,7 +84,7 @@
             <arg name="camera_mesh" value="$(arg camera_mesh)" />
             <arg name="camera_namespace" value="$(arg camera_namespace)"/>
             <arg name="urdf_namespace" value="$(arg urdf_namespace)"/>
-            <arg name="new_gazebo_world" value="true"/> <!-- should be false if using in your own gazebo world -->
+            <arg name="new_gazebo_world" value="$(arg new_gazebo_world)"/> <!-- should be false if using in your own gazebo world -->
         </include>
         <!-- STEREO CAPTURE -->
         <include unless="$(arg sim)" file="$(find i3dr_deimos)/launch/deimos_capture.launch">
