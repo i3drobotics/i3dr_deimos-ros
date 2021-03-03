@@ -23,7 +23,7 @@ Edited: 2019, Marti Morta Garriga, Wood.
     <xacro:property name="sim_h" value="${img_h/1}"/>
     <xacro:property name="sim_rate" value="1"/>
 
-    <material name="darkgrey">
+    <material name="${camera_name}_darkgrey">
         <color rgba= "0.1 0.1 0.1 1.0"/>
     </material>
 

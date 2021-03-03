@@ -5,7 +5,7 @@
 
     <!-- Camera device Deimos is connected -->
     <!-- Set to 'rosbag' if loading from bag file -->
-    <arg name="device" default="/dev/video0" />
+    <arg name="device" default="/dev/video1" />
     <!-- Rosbag to load/save images from (only used if 'device' is set to 'rosbag' -->
     <!-- Expects the following topics in the bag: -->
     <!-- i3dr_deimos/left/camera_info, i3dr_deimos/left/image_raw, -->
@@ -44,8 +44,6 @@
     <arg name="map" default="false" />
     <!-- maximum distance for depth map -->
     <arg name="depth_max" default="5" />
-    <!-- maximum distance for point cloud -->
-    <arg name="z_max" default="5" />
     <!-- camera exposure (ms) -->
     <arg name="exposure" default="5000" />
     <!-- enable/disable stereo gui (beta)-->
@@ -127,12 +125,9 @@
 
         <!-- maximum distance for depth map -->
         <arg name="depth_max" value="$(arg depth_max)" />
-        <!-- maximum distance for point cloud -->
-        <arg name="z_max" value="$(arg z_max)" />
         <!-- minimum distance for depth map -->
         <!--<arg name="depth_min" value="0" />-->
         <!-- minimum distance for point cloud -->
-        <!--<arg name="z_min" value="0" />-->
 
         <arg name="camera_namespace" value="$(arg camera_namespace)"/>
         <arg name="frame_id" value="$(arg urdf_namespace)_depth_optical_frame" />
