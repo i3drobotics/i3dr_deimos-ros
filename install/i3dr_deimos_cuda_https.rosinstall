@@ -1,7 +1,7 @@
 - git:
     local-name: i3dr_deimos-ros
     uri: https://github.com/i3drobotics/i3dr_deimos-ros.git
-    version: master
+    version: main
 - git:
     local-name: vision_opencv
     uri: https://github.com/ros-perception/vision_opencv.git
@@ -9,7 +9,7 @@
 - git:
     local-name: i3dr_stereo_camera-ros
     uri: https://github.com/i3drobotics/i3dr_stereo_camera-ros.git
-    version: master
+    version: main
 - git:
     local-name: opencv
     uri: https://github.com/opencv/opencv

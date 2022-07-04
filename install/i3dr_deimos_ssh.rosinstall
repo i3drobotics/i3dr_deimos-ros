@@ -1,8 +1,8 @@
 - git:
     local-name: i3dr_deimos-ros
     uri: git@github.com:i3drobotics/i3dr_deimos-ros.git
-    version: master
+    version: main
 - git:
     local-name: i3dr_stereo_camera-ros
     uri: git@github.com:i3drobotics/i3dr_stereo_camera-ros.git
-    version: master
+    version: main
